@@ -789,7 +789,7 @@ class PCDPublisher(Node):
         self.declare_parameter('auto', False)
 
         self.auto_mode = self.get_parameter('auto').value
-        print(f"Auto Mode: {self.auto_mode}")
+        print(f"\nAuto Mode: {self.auto_mode}")
 
         self.pcd_publisher_local = self.create_publisher(sensor_msgs.PointCloud2, 'evloc_local', 10)
         self.pcd_publisher_global = self.create_publisher(sensor_msgs.PointCloud2, 'evloc_global', 10)
