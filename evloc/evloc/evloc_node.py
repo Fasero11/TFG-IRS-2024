@@ -607,6 +607,7 @@ def generate_point_cloud(auto=False,
         print(Color.BOLD + f'\nAvailable scans [1-{num_clouds}]' + Color.END)
         id_cloud = input(Color.BOLD + "Select cloud as real scan: " + Color.END)
         if not id_cloud.strip():
+            id_cloud = 9
             print(f'Default selected cloud: {id_cloud}')
         try:
             if int(id_cloud) > num_clouds or int(id_cloud) < 1:
@@ -637,6 +638,7 @@ def generate_point_cloud(auto=False,
         # Simulated laser error
         err_dis = input(Color.BOLD + "\nSensor noise (%): " + Color.END)
         if not err_dis.strip():
+            err_dis = 0
             print(f'Default Noise: {err_dis}%')
         else:
             try:
@@ -655,6 +657,7 @@ def generate_point_cloud(auto=False,
         # Simulated environmental noise
         unif_noise = input(Color.BOLD + "\nEnvironmental noise (Uniform distribution) (%): " + Color.END)
         if not unif_noise.strip():
+            unif_noise = 0
             print(f'Default Noise: 0%')
         else:
             try:
@@ -682,6 +685,7 @@ def generate_point_cloud(auto=False,
         # Population size
         user_NPini = input(Color.BOLD + "Population size: " + Color.END)
         if not user_NPini.strip():
+            user_NPini = 100
             print(f'Default population is {user_NPini}')
         else:
             try:
@@ -698,6 +702,7 @@ def generate_point_cloud(auto=False,
         # Max Iterations
         user_iter_max = input(Color.BOLD + "\nMax. iterations: " + Color.END)
         if not user_iter_max.strip():
+            user_iter_max = 500
             print(f'Default iteration max is {user_iter_max}')
         else:
             try:
@@ -745,6 +750,8 @@ def generate_point_cloud(auto=False,
 
 def save_error_data(id_cloud, algorithm_type, user_NPini, user_iter_max, D, F, CR, time, it, poserror, orierror):
 
+    # TODO: Initialize .csv with header if file is not found.
+
     home_route = os.path.expanduser("~")
     # Definir el nombre del archivo CSV
     filename = "errordata.csv"
@@ -778,6 +785,12 @@ class PCDPublisher(Node):
     def __init__(self):
         super().__init__('pcd_publisher_node')
         
+        # Declara el parámetro mi_parametro con un valor predeterminado
+        self.declare_parameter('auto', False)
+
+        self.auto_mode = self.get_parameter('auto').value
+        print(f"Auto Mode: {self.auto_mode}")
+
         self.pcd_publisher_local = self.create_publisher(sensor_msgs.PointCloud2, 'evloc_local', 10)
         self.pcd_publisher_global = self.create_publisher(sensor_msgs.PointCloud2, 'evloc_global', 10)
 
@@ -786,7 +799,7 @@ class PCDPublisher(Node):
 
             print(Color.BOLD + "\n------------------------------------" + Color.END)
 
-            points = generate_point_cloud(True) ## True for Auto Mode (No user input required)
+            points = generate_point_cloud(auto = self.auto_mode) ## True for Auto Mode (No user input required)
 
             if points is None:
                 print("Error generating point cloud.")
