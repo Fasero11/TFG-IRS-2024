@@ -501,7 +501,7 @@ def spatial_rotation(point, p):
 
     return transformed
 
-def gl_6dof(map_global, scancloud, groundtruth, algorithm, version_fitness, err_dis,unif_noise):
+def gl_6dof(map_global, scancloud, groundtruth, algorithm, version_fitness, err_dis,unif_noise, id_cloud):
 
 
     # Global Localization Algorithm based on evolutonary metaheuristics
@@ -581,7 +581,7 @@ def get_groundtruth_data(groundtruth_file_path, id_cloud):
     except StopIteration:
         print("La fila especificada excede el número de filas en el archivo CSV.")
 
-def generate_point_cloud():
+def generate_point_cloud(auto=False):
     # Cargar el archivo .mat
     map_global_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_ori.ply")
 
@@ -592,20 +592,21 @@ def generate_point_cloud():
     #o3d.io.write_point_cloud("nube_recortada.ply", map_global_ori)
 
     num_clouds = len(os.listdir(local_clouds_folder))
+    id_cloud = 9 # default
+    if (not auto):
+        print(Color.BOLD + f'\nAvailable scans [1-{num_clouds}]' + Color.END)
+        id_cloud = input(Color.BOLD + "Select cloud as real scan: " + Color.END)
+        if not id_cloud.strip():
+            id_cloud = 9
+            print(f'Default selected cloud: {id_cloud}')
+        try:
+            if int(id_cloud) > num_clouds or int(id_cloud) < 1:
+                print(f'Error. Selected cloud ({id_cloud}) does not exist.') 
+                exit(1)
 
-    print(Color.BOLD + f'\nAvailable scans [1-{num_clouds}]' + Color.END)
-    id_cloud = input(Color.BOLD + "Select cloud as real scan: " + Color.END)
-    if not id_cloud.strip():
-        id_cloud = 9
-        print(f'Default selected cloud: {id_cloud}')
-    try:
-        if int(id_cloud) > num_clouds or int(id_cloud) < 1:
-            print(f'Error. Selected cloud ({id_cloud}) does not exist.') 
+        except ValueError as e:
+            print(f'Error: Invalid Number. {e}')
             exit(1)
-
-    except ValueError as e:
-        print(f'Error: Invalid Number. {e}')
-        exit(1)
 
     # SELECT LOCAL POINTCLOUD
     real_scan_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/local_clouds/cloud_{id_cloud}.ply")
@@ -622,105 +623,155 @@ def generate_point_cloud():
     #print(f"original Size: {len(map_global_ori.points)}")
     #print(f"Downsampled Size: {len(map_global.points)}")
 
-    # Variables introduced via keyboard #
+    # Variables introduced via keyboard # (Only if not in auto mode)
+    err_dis = 0
+    unif_noise = 0
+    algorithm_type = 1
+    version_fitness = 1
+    user_NPini = 100
+    user_iter_max = 500
 
-    # Simulated laser error
-    err_dis = input(Color.BOLD + "\nSensor noise (%): " + Color.END)
-    if not err_dis.strip():
-        err_dis = 0
-        print(f'Default Noise: {err_dis}%')
-    else:
-        try:
-            err_dis = int(err_dis)
-            
-            if err_dis > 100 or err_dis < 0:
-                print(f'Error. Selected error ({err_dis}) is invalid.') 
+    if (not auto):
+        # Simulated laser error
+        err_dis = input(Color.BOLD + "\nSensor noise (%): " + Color.END)
+        if not err_dis.strip():
+            err_dis = 0
+            print(f'Default Noise: {err_dis}%')
+        else:
+            try:
+                err_dis = int(err_dis)
+                
+                if err_dis > 100 or err_dis < 0:
+                    print(f'Error. Selected error ({err_dis}) is invalid.') 
+                    exit(1)
+
+                err_dis = err_dis/100
+
+            except ValueError as e:
+                print(f'Error: Invalid Input. {e}')
                 exit(1)
 
-            err_dis = err_dis/100
+        # Simulated environmental noise
+        unif_noise = input(Color.BOLD + "\nEnvironmental noise (Uniform distribution) (%): " + Color.END)
+        if not unif_noise.strip():
+            unif_noise = 0
+            print(f'Default Noise: 0%')
+        else:
+            try:
+                unif_noise = int(unif_noise)
+                
+                if unif_noise > 100 or unif_noise < 0:
+                    print(f'Error. Selected error ({unif_noise}) is invalid.') 
+                    exit(1)
 
-        except ValueError as e:
-            print(f'Error: Invalid Input. {e}')
-            exit(1)
+                unif_noise = unif_noise/100
 
-    # Simulated environmental noise
-    unif_noise = input(Color.BOLD + "\nEnvironmental noise (Uniform distribution) (%): " + Color.END)
-    if not unif_noise.strip():
-        unif_noise = 0
-        print(f'Default Noise: 0%')
-    else:
-        try:
-            unif_noise = int(unif_noise)
-            
-            if unif_noise > 100 or unif_noise < 0:
-                print(f'Error. Selected error ({unif_noise}) is invalid.') 
+            except ValueError as e:
+                print(f'Error: Invalid Input. {e}')
                 exit(1)
 
-            unif_noise = unif_noise/100
+        # Algorithm selection
+        algorithm_type = 1 # Differential Evolution (default)
 
-        except ValueError as e:
-            print(f'Error: Invalid Input. {e}')
-            exit(1)
+        # Fitness Function Options:
+        version_fitness = 1 # Sum of the squared errors (Default)
 
-    # Algorithm selection
-    algorithm_type = 1 # Differential Evolution (default)
+        ## ALGORITHM PARAMETERS SECTION ##
+        print(Color.BOLD + f'\nDifferential Evolution parameters:\n' + Color.END)
 
-    # Fitness Function Options:
-    version_fitness = 1 # Sum of the squared errors (Default)
+        # Population size
+        user_NPini = input(Color.BOLD + "Population size: " + Color.END)
+        if not user_NPini.strip():
+            user_NPini = 100
+            print(f'Default population is {user_NPini}')
+        else:
+            try:
+                user_NPini = int(user_NPini)
+                
+                if user_NPini <= 0:
+                    print(f'Error. Selected error ({user_NPini}) is invalid.') 
+                    exit(1)
 
-    ## ALGORITHM PARAMETERS SECTION ##
-    print(Color.BOLD + f'\nDifferential Evolution parameters:\n' + Color.END)
-
-    # Population size
-    user_NPini = input(Color.BOLD + "Population size: " + Color.END)
-    if not user_NPini.strip():
-        user_NPini = 100
-        print(f'Default population is {user_NPini}')
-    else:
-        try:
-            user_NPini = int(user_NPini)
-            
-            if user_NPini <= 0:
-                print(f'Error. Selected error ({user_NPini}) is invalid.') 
+            except ValueError as e:
+                print(f'Error: Invalid Input. {e}')
                 exit(1)
 
-        except ValueError as e:
-            print(f'Error: Invalid Input. {e}')
-            exit(1)
+        # Max Iterations
+        user_iter_max = input(Color.BOLD + "\nMax. iterations: " + Color.END)
+        if not user_iter_max.strip():
+            user_iter_max = 500
+            print(f'Default iteration max is {user_iter_max}')
+        else:
+            try:
+                user_iter_max = int(user_iter_max)
+                
+                if user_iter_max <= 0:
+                    print(f'Error. Selected error ({user_iter_max}) is invalid.') 
+                    exit(1)
 
-    # Max Iterations
-    user_iter_max = input(Color.BOLD + "\nMax. iterations: " + Color.END)
-    if not user_iter_max.strip():
-        user_iter_max = 500
-        print(f'Default iteration max is {user_iter_max}')
-    else:
-        try:
-            user_iter_max = int(user_iter_max)
-            
-            if user_iter_max <= 0:
-                print(f'Error. Selected error ({user_iter_max}) is invalid.') 
+            except ValueError as e:
+                print(f'Error: Invalid Input. {e}')
                 exit(1)
 
-        except ValueError as e:
-            print(f'Error: Invalid Input. {e}')
-            exit(1)
+    else:
+        print(Color.DARKCYAN + "Auto mode enabled. Ignoring user inputs" + Color.END)
+
+    D=6
+    F=0.9
+    CR=0.75
 
     print(Color.BOLD + "\nFINAL ALGORITHM PARAMETERS: " + Color.END)
+    print(f"Local Cloud: {id_cloud}")
     print(f"Algortihm type: {algorithm_type}")
     print(f"NPini: {user_NPini}")
     print(f"iter_max: {user_iter_max}")
-    print(f"D: {6}")
-    print(f"F: {0.9}")
-    print(f"CR: {0.75}")
-    algorithm = Algorithm(type=algorithm_type, NPini=user_NPini, iter_max=user_iter_max, D=6, F=0.9, CR=0.75)
+    print(f"D: {D}")
+    print(f"F: {F}")
+    print(f"CR: {CR}")
+    algorithm = Algorithm(type=algorithm_type, NPini=user_NPini, iter_max=user_iter_max, D=D, F=D, CR=CR)
 
-    solution = gl_6dof(map_global, real_scan, groundtruth, algorithm, version_fitness, err_dis, unif_noise)
+    solution = gl_6dof(map_global, real_scan, groundtruth, algorithm, version_fitness, err_dis, unif_noise, id_cloud)
 
     #Plot Results
     sol_points = spatial_rotation(real_scan_ori.points, solution.pose_estimate)
+    
+    poserror = np.sqrt((groundtruth[0] - solution.pose_estimate[0]) ** 2 + (groundtruth[1] - solution.pose_estimate[1]) ** 2 + (groundtruth[2] - solution.pose_estimate[2]) ** 2)
+    orierror = [
+        abs((groundtruth[3] - solution.pose_estimate[3]) * 180 / pi),
+        abs((groundtruth[4] - solution.pose_estimate[4]) * 180 / pi),
+        abs((groundtruth[5] - solution.pose_estimate[5]) * 180 / pi)
+    ]
+
+    save_error_data(id_cloud, algorithm_type, user_NPini, user_iter_max, D, F, CR, solution.time, solution.it, poserror, orierror)
 
     return sol_points
 
+
+def save_error_data(id_cloud, algorithm_type, user_NPini, user_iter_max, D, F, CR, time, it, poserror, orierror):
+
+    home_route = os.path.expanduser("~")
+    # Definir el nombre del archivo CSV
+    filename = "errordata.csv"
+    filepath = os.path.join(home_route, filename)
+
+    # Escribir los datos en el archivo CSV
+    with open(filepath, mode='a', newline='') as archivo_csv:
+        escritor_csv = csv.writer(archivo_csv)
+        escritor_csv.writerow([id_cloud] + [algorithm_type] + [user_NPini] + [user_iter_max] + [D] + [F] + [CR] + [time] + [it] + [poserror] + orierror)
+    
+    print(Color.BOLD + "SUMMARY:\n" + Color.END)
+    print(f"id_cloud: {id_cloud}")
+    print(f"algorithm_type: {algorithm_type}")
+    print(f"user_NPini: {user_NPini}")
+    print(f"user_iter_max: {user_iter_max}")
+    print(f"D: {D}")
+    print(f"F: {F}")
+    print(f"CR: {CR}")
+    print(f"time: {time}s")
+    print(f"it: {it}")
+    print(f"poserror: {poserror}")
+    print(f"orierror: {orierror}\n")
+    print(Color.BOLD + f"Data Saved in {filepath}" + Color.END)
 
 ##############################
 ##############################
@@ -731,22 +782,23 @@ class PCDPublisher(Node):
     def __init__(self):
         super().__init__('pcd_publisher_node')
         
-        self.pcd_publisher = self.create_publisher(sensor_msgs.PointCloud2, 'evloc_global', 10)
+        self.pcd_publisher_local = self.create_publisher(sensor_msgs.PointCloud2, 'evloc_local', 10)
+        self.pcd_publisher_global = self.create_publisher(sensor_msgs.PointCloud2, 'evloc_global', 10)
 
     def run(self):
         while True:
-            points = generate_point_cloud()
+            points = generate_point_cloud(True) ## True for Auto Mode (No user input required)
+
             if points is None:
                 print("Error generating point cloud.")
                 break
             
             self.publish_point_cloud(points, 'map')
-            print(f"PointCloud with dimensions {points.shape} has been published.")
 
-            restart = self.ask_restart()
-            if not restart:
-                self.destroy_node()  # Cierra el nodo antes de salir del bucle
-                break
+            # restart = self.ask_restart()
+            # if not restart:
+            #     self.destroy_node()  # Cierra el nodo antes de salir del bucle
+            #     break
 
     def ask_restart(self):
         while True:
@@ -760,8 +812,17 @@ class PCDPublisher(Node):
 
 
     def publish_point_cloud(self, points, parent_frame):
+        
+        points = points[::2] # Downsampling. Son demasiados puntos para RVIZ
         pcd = self.point_cloud(points, parent_frame)
-        self.pcd_publisher.publish(pcd)
+        self.pcd_publisher_local.publish(pcd)
+        print(f"Local PointCloud with dimensions {points.shape} has been published.")
+
+        map_global_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_ori.ply")
+        points2 = np.asarray(map_global_ori.points)[::40] # Downsampling. Son demasiados puntos para RVIZ
+        pcd_global = self.point_cloud(points2, parent_frame)
+        self.pcd_publisher_global.publish(pcd_global)
+        print(f"Global PointCloud with dimensions {points2.shape} has been published.")
 
     def point_cloud(self, points, parent_frame):
         """ Creates a point cloud message.
