@@ -502,8 +502,7 @@ def spatial_rotation(point, p):
 
     return transformed
 
-def gl_6dof(map_global, scancloud, groundtruth, algorithm, version_fitness, err_dis,unif_noise, id_cloud):
-
+def gl_6dof(map_global, scancloud, groundtruth, algorithm, version_fitness, err_dis,unif_noise):
 
     # Global Localization Algorithm based on evolutonary metaheuristics
 
@@ -725,9 +724,9 @@ def generate_point_cloud(auto=False,
     print(f"D: {D}")
     print(f"F: {F}")
     print(f"CR: {CR}")
-    algorithm = Algorithm(type=algorithm_type, NPini=user_NPini, iter_max=user_iter_max, D=D, F=D, CR=CR)
+    algorithm = Algorithm(type=algorithm_type, NPini=user_NPini, iter_max=user_iter_max, D=D, F=F, CR=CR)
 
-    solution = gl_6dof(map_global, real_scan, groundtruth, algorithm, version_fitness, err_dis, unif_noise, id_cloud)
+    solution = gl_6dof(map_global, real_scan, groundtruth, algorithm, version_fitness, err_dis, unif_noise)
 
     #Plot Results
     sol_points = spatial_rotation(real_scan_ori.points, solution.pose_estimate)
