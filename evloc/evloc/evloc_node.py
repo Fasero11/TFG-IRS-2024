@@ -386,7 +386,7 @@ def de_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D,iter_max,F,CR,versi
             elif count_bestfix > 10 and count_worsefix > 10 and count_avgfix > 10:
                 stringcondition = 'invariant convergence'
             
-            print(f'\nPopulation converged in: {it} iterations and condition: {stringcondition}')
+            print(f'\n{Color.CYAN}Population converged in: {it} iterations and condition: {stringcondition}{Color.END}')
             break
     ########################################################
     ########################################################
@@ -714,7 +714,7 @@ def generate_point_cloud(auto=False):
                 exit(1)
 
     else:
-        print(Color.DARKCYAN + "Auto mode enabled. Ignoring user inputs" + Color.END)
+        print("\n" + Color.DARKCYAN + "Auto mode enabled. Ignoring user inputs" + Color.END)
 
     D=6
     F=0.9
@@ -722,6 +722,8 @@ def generate_point_cloud(auto=False):
 
     print(Color.BOLD + "\nFINAL ALGORITHM PARAMETERS: " + Color.END)
     print(f"Local Cloud: {id_cloud}")
+    print(f"Sensor Error: {err_dis}")
+    print(f"Uniform Noise: {unif_noise}")
     print(f"Algortihm type: {algorithm_type}")
     print(f"NPini: {user_NPini}")
     print(f"iter_max: {user_iter_max}")
@@ -759,7 +761,7 @@ def save_error_data(id_cloud, algorithm_type, user_NPini, user_iter_max, D, F, C
         escritor_csv = csv.writer(archivo_csv)
         escritor_csv.writerow([id_cloud] + [algorithm_type] + [user_NPini] + [user_iter_max] + [D] + [F] + [CR] + [time] + [it] + [poserror] + orierror)
     
-    print(Color.BOLD + "SUMMARY:\n" + Color.END)
+    print("\n"+Color.BOLD + "SUMMARY:" + Color.END)
     print(f"id_cloud: {id_cloud}")
     print(f"algorithm_type: {algorithm_type}")
     print(f"user_NPini: {user_NPini}")
@@ -771,7 +773,7 @@ def save_error_data(id_cloud, algorithm_type, user_NPini, user_iter_max, D, F, C
     print(f"it: {it}")
     print(f"poserror: {poserror}")
     print(f"orierror: {orierror}\n")
-    print(Color.BOLD + f"Data Saved in {filepath}" + Color.END)
+    print(Color.BOLD + f"Data Saved in {filepath}" + Color.END + "\n")
 
 ##############################
 ##############################
