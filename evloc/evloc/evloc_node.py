@@ -807,10 +807,11 @@ class PCDPublisher(Node):
             
             self.publish_point_cloud(points, 'map')
 
-            # restart = self.ask_restart()
-            # if not restart:
-            #     self.destroy_node()  # Cierra el nodo antes de salir del bucle
-            #     break
+            if not self.auto_mode:
+                restart = self.ask_restart()
+                if not restart:
+                    self.destroy_node()  # Cierra el nodo antes de salir del bucle
+                    break
 
             print(Color.BOLD + "\n------------------------------------" + Color.END)
 
