@@ -313,9 +313,10 @@ def de_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D,iter_max,F,CR,versi
         sumcosts=0
 
         # Calculate average cost
-        for pop in population:
+        for k in range(NP):
+            pop = population[k]
             sumcosts += pop.Cost
-        average_cost = sumcosts / len(population)
+        average_cost = sumcosts / NP
 
         # Best and worst costs
         best_particle_cost_now = BestSol.Cost
@@ -581,7 +582,18 @@ def get_groundtruth_data(groundtruth_file_path, id_cloud):
     except StopIteration:
         print("La fila especificada excede el número de filas en el archivo CSV.")
 
-def generate_point_cloud(auto=False):
+def generate_point_cloud(auto=False,
+                         id_cloud = 9,
+                         err_dis = 0, 
+                         unif_noise = 0,
+                         algorithm_type = 1,
+                         version_fitness = 1,
+                         user_NPini = 100,
+                         user_iter_max = 500,
+                         D=6,
+                         F=0.9,
+                         CR=0.75):
+    
     # Cargar el archivo .mat
     map_global_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_ori.ply")
 
@@ -592,12 +604,10 @@ def generate_point_cloud(auto=False):
     #o3d.io.write_point_cloud("nube_recortada.ply", map_global_ori)
 
     num_clouds = len(os.listdir(local_clouds_folder))
-    id_cloud = 9 # default
     if (not auto):
         print(Color.BOLD + f'\nAvailable scans [1-{num_clouds}]' + Color.END)
         id_cloud = input(Color.BOLD + "Select cloud as real scan: " + Color.END)
         if not id_cloud.strip():
-            id_cloud = 9
             print(f'Default selected cloud: {id_cloud}')
         try:
             if int(id_cloud) > num_clouds or int(id_cloud) < 1:
@@ -624,18 +634,10 @@ def generate_point_cloud(auto=False):
     #print(f"Downsampled Size: {len(map_global.points)}")
 
     # Variables introduced via keyboard # (Only if not in auto mode)
-    err_dis = 0
-    unif_noise = 0
-    algorithm_type = 1
-    version_fitness = 1
-    user_NPini = 100
-    user_iter_max = 500
-
     if (not auto):
         # Simulated laser error
         err_dis = input(Color.BOLD + "\nSensor noise (%): " + Color.END)
         if not err_dis.strip():
-            err_dis = 0
             print(f'Default Noise: {err_dis}%')
         else:
             try:
@@ -654,7 +656,6 @@ def generate_point_cloud(auto=False):
         # Simulated environmental noise
         unif_noise = input(Color.BOLD + "\nEnvironmental noise (Uniform distribution) (%): " + Color.END)
         if not unif_noise.strip():
-            unif_noise = 0
             print(f'Default Noise: 0%')
         else:
             try:
@@ -682,7 +683,6 @@ def generate_point_cloud(auto=False):
         # Population size
         user_NPini = input(Color.BOLD + "Population size: " + Color.END)
         if not user_NPini.strip():
-            user_NPini = 100
             print(f'Default population is {user_NPini}')
         else:
             try:
@@ -699,7 +699,6 @@ def generate_point_cloud(auto=False):
         # Max Iterations
         user_iter_max = input(Color.BOLD + "\nMax. iterations: " + Color.END)
         if not user_iter_max.strip():
-            user_iter_max = 500
             print(f'Default iteration max is {user_iter_max}')
         else:
             try:
@@ -715,10 +714,6 @@ def generate_point_cloud(auto=False):
 
     else:
         print("\n" + Color.DARKCYAN + "Auto mode enabled. Ignoring user inputs" + Color.END)
-
-    D=6
-    F=0.9
-    CR=0.75
 
     print(Color.BOLD + "\nFINAL ALGORITHM PARAMETERS: " + Color.END)
     print(f"Local Cloud: {id_cloud}")
@@ -789,6 +784,9 @@ class PCDPublisher(Node):
 
     def run(self):
         while True:
+
+            print(Color.BOLD + "\n------------------------------------" + Color.END)
+
             points = generate_point_cloud(True) ## True for Auto Mode (No user input required)
 
             if points is None:
@@ -801,6 +799,8 @@ class PCDPublisher(Node):
             # if not restart:
             #     self.destroy_node()  # Cierra el nodo antes de salir del bucle
             #     break
+
+            print(Color.BOLD + "\n------------------------------------" + Color.END)
 
     def ask_restart(self):
         while True:
