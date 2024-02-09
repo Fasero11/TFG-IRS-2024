@@ -2,16 +2,15 @@ import rclpy
 from rclpy.node import Node
 import sensor_msgs.msg as sensor_msgs
 import std_msgs.msg as std_msgs
-
 import numpy as np
 import open3d as o3d
 
+from ament_index_python.packages import get_package_share_directory
+
 ##############################
 ##############################
 ##############################
 
-import open3d as o3d
-import numpy as np
 import csv
 import os
 import time
@@ -22,8 +21,10 @@ import warnings
 # Filter out the RuntimeWarning for invalid value encountered in divide
 warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value encountered in divide")
 
-groundtruth_file_path = "/home/adminpc/Desktop/ros2_ws/src/resources/groundtruth_data.csv"
-local_clouds_folder = "/home/adminpc/Desktop/ros2_ws/src/resources/local_clouds"
+PACKAGE_PATH = os.path.join(get_package_share_directory('evloc'), 'resources')
+
+groundtruth_file_path = f"{PACKAGE_PATH}/groundtruth_data.csv"
+local_clouds_folder = f"{PACKAGE_PATH}/local_clouds"
 
 DOWN_SAMPLING_FACTOR_GLOBAL = 0.004     # factor de downsampling para mapa, hay que reducir puntos en ambas nubes
 DOWN_SAMPLING_FACTOR = 0.01             # factor de downsampling para scan
@@ -582,7 +583,7 @@ def get_groundtruth_data(groundtruth_file_path, id_cloud):
 
 def generate_point_cloud():
     # Cargar el archivo .mat
-    map_global_ori = o3d.io.read_point_cloud("/home/adminpc/Desktop/ros2_ws/src/resources/map_global_ori.ply")
+    map_global_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_ori.ply")
 
     # Show cutout of original point cloud
     #o3d.visualization.draw_geometries([map_global_ori])
@@ -607,7 +608,7 @@ def generate_point_cloud():
         exit(1)
 
     # SELECT LOCAL POINTCLOUD
-    real_scan_ori = o3d.io.read_point_cloud(f"/home/adminpc/Desktop/ros2_ws/src/resources/local_clouds/cloud_{id_cloud}.ply")
+    real_scan_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/local_clouds/cloud_{id_cloud}.ply")
 
 
     ## READ GROUNDTRUTH ##
@@ -720,6 +721,7 @@ def generate_point_cloud():
 
     return sol_points
 
+
 ##############################
 ##############################
 ##############################
@@ -728,6 +730,7 @@ class PCDPublisher(Node):
 
     def __init__(self):
         super().__init__('pcd_publisher_node')
+        
         self.pcd_publisher = self.create_publisher(sensor_msgs.PointCloud2, 'evloc_global', 10)
 
     def run(self):
