@@ -2,6 +2,8 @@
 
 This project implements evolutive localization in ROS2.
 
+**IMPORTANT: You need to add `global_map_ori.ply` to the `evloc/resources` folder. Since this file is too big, it hasn't been uploaded to the repository.**
+
 ## How to Run
 
 1. Create a folder. Inside the folder, create a `src` subfolder.
