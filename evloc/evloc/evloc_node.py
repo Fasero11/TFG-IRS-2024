@@ -7,10 +7,6 @@ import open3d as o3d
 
 from ament_index_python.packages import get_package_share_directory
 
-##############################
-##############################
-##############################
-
 import csv
 import os
 import time
@@ -18,13 +14,18 @@ from math import pi
 
 import warnings
 
+##############################
+##############################
+##############################
+
 # Filter out the RuntimeWarning for invalid value encountered in divide
+# For when NaN is calculated in add_noise_to_pc.
 warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value encountered in divide")
 
 PACKAGE_PATH = os.path.join(get_package_share_directory('evloc'), 'resources')
 
-groundtruth_file_path = f"{PACKAGE_PATH}/groundtruth_data.csv"
-local_clouds_folder = f"{PACKAGE_PATH}/local_clouds"
+GROUNDTRUTH_FILE_PATH = f"{PACKAGE_PATH}/groundtruth_data.csv"
+LOCAL_CLOUDS_FOLDER = f"{PACKAGE_PATH}/local_clouds"
 
 DOWN_SAMPLING_FACTOR_GLOBAL = 0.004     # factor de downsampling para mapa, hay que reducir puntos en ambas nubes
 DOWN_SAMPLING_FACTOR = 0.01             # factor de downsampling para scan
@@ -45,6 +46,10 @@ class Color:
     END = '\033[0m'
 
 class Population:
+    """
+    An agent of the algorithm.
+    Includes a position and cost.
+    """
     def __init__(self, position=[], cost=[]):
         self.Position = position
         self.Cost = cost
@@ -54,6 +59,16 @@ class Population:
         return Population(self.Position.copy(), self.Cost.copy())
 
 class Solution:
+    """
+    Class where the solution of the algorithm is stored.
+    it: Number of iterations to converge.
+    timediff: Time elapsed during the execution.
+    estimate: Estimated pose
+    pos_error: Position error in meters
+    ori_error: Orientation error in degrees.
+    map_global: Global map
+    real_scan: Local map
+    """
     def __init__(self, it, timediff, estimate, pos_error, ori_error, map_global, real_scan):
         self.it = it
         self.time = timediff
@@ -72,6 +87,9 @@ class Solution:
         return new_pc
 
 class Algorithm:
+    """
+    Class that stores the parameters of the algorithm that will be used
+    """
     def __init__(self, type=None, NPini=None, iter_max=None, D=None, F=None, CR=None):
         self.type = type
         self.NPini = NPini
@@ -80,16 +98,18 @@ class Algorithm:
         self.F = F
         self.CR = CR
 
-#Differential Evolution with Thresholding and Discarding 
-# Evolucion por mutación. En cada iteración, cada candidato (xi) genera uno
-# nuevo (x(i+1)). Este nuevo es una combinación parámetro a parámetro del candidato
-# antiguo y de una combinación tal que x(i+1)=F*(xc-xb)+xa, de otros 3 candidados de la poblacion xa,
-# xb y xc escogidos aleatoriamente.
-# El factor de mutación F determina como de "lejos" puede terminar cada nuevo parámetro en caso de mutar
-# La tasa de cruce CR define qué porcentaje de parámetros de x(i+1) son mutados o se heredan
-# de xi.
-def de_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D,iter_max,F,CR,version_fitness):
 
+def de_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D,iter_max,F,CR,version_fitness):
+    """
+    Differential Evolution with Thresholding and Discarding 
+    Evolucion por mutación. En cada iteración, cada candidato (xi) genera uno
+    nuevo (x(i+1)). Este nuevo es una combinación parámetro a parámetro del candidato
+    antiguo y de una combinación tal que x(i+1)=F*(xc-xb)+xa, de otros 3 candidados de la poblacion xa,
+    xb y xc escogidos aleatoriamente.
+    El factor de mutación F determina como de "lejos" puede terminar cada nuevo parámetro en caso de mutar
+    La tasa de cruce CR define qué porcentaje de parámetros de x(i+1) son mutados o se heredan
+    de xi.
+    """
     ##  Boundaries
     higherBoundX = mapmax[0]  # X Translation in meters
     lowerBoundX = mapmin[0]
@@ -291,8 +311,6 @@ def de_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D,iter_max,F,CR,versi
             if newmember.Cost < population[pop_id].Cost * 0.98:  # con umbral, el nuevo miembro debe mejorar más del 2% (evita efecto de ruido)
                 population[pop_id] = newmember
 
-        ### TODO: Seguir debug
-
         # Discarding, substituting the worst candidates for some of the best
         # members (speeds up convergence)
 
@@ -404,8 +422,10 @@ def de_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D,iter_max,F,CR,versi
     return(pcAligned, BestMember, bestCost, rmse_array, it)
 
 def add_noise_to_pc(cloud, err_dis, unif_noise):
-    # returns a point cloud with the noise added.
-    
+    """
+    Returns a point cloud with the noise added.
+    """
+
     sensnoise_PCmat = cloud.points
     dist_3d = distance_pc_to_point(cloud.points, [0, 0, 0])
     err_m = np.random.randn(dist_3d.size)  # Generating random samples from a normal distribution
@@ -433,15 +453,17 @@ def add_noise_to_pc(cloud, err_dis, unif_noise):
 
 
 def costfunction3d(dist_scan, dist_map, version_fitness, err_dis):
-    # Descripción: función de ajuste que se optimiza mediante el filtro de localización global.
-    # Las mediciones láser de la exploración actual se comparan con las mediciones láser
-    # en el vecino más cercano sobre el mapa real para calcular un valor de costo
-    # para una estimación. Este valor de costo se minimizará para obtener la solución
-    # del problema de localización global.
+    """
+    Descripción: función de ajuste que se optimiza mediante el filtro de localización global.
+    Las mediciones láser de la exploración actual se comparan con las mediciones láser
+    en el vecino más cercano sobre el mapa real para calcular un valor de costo
+    para una estimación. Este valor de costo se minimizará para obtener la solución
+    del problema de localización global.
 
-    # En el caso de considerar la norma L2, la contribución al
-    # error en cada medida es el cuadrado de la diferencia entre la medida estimada y la real,
-    # dividido por la varianza multiplicada por 2, para aplicar criterios de convergencia.
+    En el caso de considerar la norma L2, la contribución al
+    error en cada medida es el cuadrado de la diferencia entre la medida estimada y la real,
+    dividido por la varianza multiplicada por 2, para aplicar criterios de convergencia.
+    """
     if version_fitness == 1:
         error = np.sum(np.sum(((dist_scan - dist_map)**2) / (1 + 2 * (err_dis * dist_scan)**2)))
 
@@ -455,13 +477,13 @@ def costfunction3d(dist_scan, dist_map, version_fitness, err_dis):
 
 
 def distance_pc_to_point(cloud_mat, point):
-    # Distance from each point of a pointcloud to a point
+    """
+    Distance from each point of a pointcloud to a point
 
-    # -cloud_mat: Open3D PointCloud object
-    # -point: (x y z)
-    # - dist=horizontal vector with each PCpoint distance to point
-
-    # Extract the numpy array from the PointCloud object
+    -cloud_mat: Open3D PointCloud object
+    -point: (x y z)
+    - dist=horizontal vector with each PCpoint distance to point
+    """
     cloud_array = np.asarray(cloud_mat)
 
     dist_mat = np.zeros((1, cloud_array.shape[0]))
@@ -475,15 +497,17 @@ def distance_pc_to_point(cloud_mat, point):
 
 
 def spatial_rotation(point, p):
-    # spatialTransformation
-    # The point gets transform by multiplying by the coordinate frame of the
-    # first scan according to the parameters
-    # Inputs:
-    #   point: Horizontal vector nx3
-    #   p:  Vertical vector 6x1 (rad)
-    # Outputs:
-    #   transformed: Horizontal vector nx3 with the point transformed in the
-    #   space
+    """
+    spatialTransformation
+    The point gets transform by multiplying by the coordinate frame of the
+    first scan according to the parameters
+    Inputs:
+      point: Horizontal vector nx3
+      p:  Vertical vector 6x1 (rad)
+    Outputs:
+      transformed: Horizontal vector nx3 with the point transformed in the
+      space
+    """
 
     cAlpha = np.cos(p[3])
     sAlpha = np.sin(p[3])
@@ -503,13 +527,15 @@ def spatial_rotation(point, p):
     return transformed
 
 def gl_6dof(map_global, scancloud, groundtruth, algorithm, version_fitness, err_dis,unif_noise):
+    """
+    Global Localization Algorithm based on evolutonary metaheuristics
 
-    # Global Localization Algorithm based on evolutonary metaheuristics
+    Definimos los límites de búsqueda para cada grado de libertad, limites del
+    mapa en traslación +- 6 grados para pitch y roll y 360º para yaw
 
-    # Definimos los límites de búsqueda para cada grado de libertad, limites del
-    # mapa en traslación +- 6 grados para pitch y roll y 360º para yaw
+    Get the axis-aligned bounding box
+    """
 
-    # Get the axis-aligned bounding box
     aabb = map_global.get_axis_aligned_bounding_box()
 
     min_bound = aabb.get_min_bound()
@@ -522,14 +548,16 @@ def gl_6dof(map_global, scancloud, groundtruth, algorithm, version_fitness, err_
     mapmax=[x_max, y_max, z_max, 0.1, 0.1, pi]
 
     real_scan = add_noise_to_pc(scancloud, err_dis, unif_noise) # añadir ruido de sensor y de ambiente al scan
-    #o3d.visualization.draw_geometries([real_scan])
-    #--------------------------------------------------------------------------------------------
-    # EJECUCION DEL ALGORITMO EVOLUTIVO DE
+
+
     print(Color.GREEN + f'\nPosicion real del robot[x, y, z, alpha, beta, theta]: ' +
         f'[{round(groundtruth[0], 4)}, {round(groundtruth[1], 4)}, {round(groundtruth[2], 4)}, ' +
         f'{round(groundtruth[3], 4)}, {round(groundtruth[4], 4)}, {round(groundtruth[5], 4)}]' + Color.END)
     
     initial_time = time.time()
+
+    #--------------------------------------------------------------------------------------------
+    # EJECUCION DEL ALGORITMO EVOLUTIVO
 
     if (algorithm.type == 1): # Differential Evolution
         NPini=algorithm.NPini
@@ -563,9 +591,12 @@ def gl_6dof(map_global, scancloud, groundtruth, algorithm, version_fitness, err_
 
     return solution
 
-def get_groundtruth_data(groundtruth_file_path, id_cloud):
+def get_groundtruth_data(GROUNDTRUTH_FILE_PATH, id_cloud):
+    """
+    Reads the row "id_cloud" from the GROUNDTRUTH_FILE_PATH and returns it.
+    """
     try:
-        with open(groundtruth_file_path, 'r') as file:
+        with open(GROUNDTRUTH_FILE_PATH, 'r') as file:
             csv_reader = csv.reader(file)
             
             for _ in range(int(id_cloud)):
@@ -592,17 +623,14 @@ def generate_point_cloud(auto=False,
                          D=6,
                          F=0.9,
                          CR=0.75):
-    
-    # Cargar el archivo .mat
+    """
+    Executes the evolutive localization algorithm.
+    Returns the points that form the calculated point cloud.
+    """
+
     map_global_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_ori.ply")
 
-    # Show cutout of original point cloud
-    #o3d.visualization.draw_geometries([map_global_ori])
-
-    # Guardar la nube de puntos recortada en formato PLY (opcional)
-    #o3d.io.write_point_cloud("nube_recortada.ply", map_global_ori)
-
-    num_clouds = len(os.listdir(local_clouds_folder))
+    num_clouds = len(os.listdir(LOCAL_CLOUDS_FOLDER))
     if (not auto):
         print(Color.BOLD + f'\nAvailable scans [1-{num_clouds}]' + Color.END)
         id_cloud = input(Color.BOLD + "Select cloud as real scan: " + Color.END)
@@ -621,17 +649,13 @@ def generate_point_cloud(auto=False,
     # SELECT LOCAL POINTCLOUD
     real_scan_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/local_clouds/cloud_{id_cloud}.ply")
 
-
     ## READ GROUNDTRUTH ##
 
-    groundtruth = get_groundtruth_data(groundtruth_file_path, id_cloud)
+    groundtruth = get_groundtruth_data(GROUNDTRUTH_FILE_PATH, id_cloud)
 
     # Downsampling
     map_global = map_global_ori.uniform_down_sample(every_k_points=int(1 / DOWN_SAMPLING_FACTOR_GLOBAL)) # Original PointCloud (Global Map)
     real_scan = real_scan_ori.uniform_down_sample(every_k_points=int(1 / DOWN_SAMPLING_FACTOR))         # User Selected PointCloud (Local Map)
-
-    #print(f"original Size: {len(map_global_ori.points)}")
-    #print(f"Downsampled Size: {len(map_global.points)}")
 
     # Variables introduced via keyboard # (Only if not in auto mode)
     if (not auto):
@@ -749,13 +773,21 @@ def generate_point_cloud(auto=False,
 
 
 def save_error_data(id_cloud, algorithm_type, user_NPini, user_iter_max, D, F, CR, time, it, poserror, orierror):
-
-    # TODO: Initialize .csv with header if file is not found.
+    """
+    Saves the solution in the $HOME directory as a .csv file
+    """
 
     home_route = os.path.expanduser("~")
-    # Definir el nombre del archivo CSV
+    
     filename = "errordata.csv"
     filepath = os.path.join(home_route, filename)
+
+    # Initializing CSV file with header if it doesn't exist
+    if not os.path.exists(filepath):
+        with open(filepath, mode='w', newline='') as archivo_csv:
+            escritor_csv = csv.writer(archivo_csv)
+            escritor_csv.writerow(['id_cloud', 'algorithm_type', 'user_NPini', 'user_iter_max', 'D', 'F', 'CR', 'time', 'it', 'poserror', 'orierror_1', 'orierror_2', 'orierror_2'])
+
 
     # Escribir los datos en el archivo CSV
     with open(filepath, mode='a', newline='') as archivo_csv:
@@ -795,23 +827,29 @@ class PCDPublisher(Node):
         self.pcd_publisher_global = self.create_publisher(sensor_msgs.PointCloud2, 'evloc_global', 10)
 
     def run(self):
+        selcted_cloud = 1
         while True:
 
             print(Color.BOLD + "\n------------------------------------" + Color.END)
 
-            points = generate_point_cloud(auto = self.auto_mode) ## True for Auto Mode (No user input required)
+            points = generate_point_cloud(auto = self.auto_mode, id_cloud = selcted_cloud) ## True for Auto Mode (No user input required)
 
             if points is None:
                 print("Error generating point cloud.")
                 break
             
             self.publish_point_cloud(points, 'map')
-
+            
             if not self.auto_mode:
                 restart = self.ask_restart()
                 if not restart:
                     self.destroy_node()  # Cierra el nodo antes de salir del bucle
                     break
+            else:
+                # Loop for every cloud when in auto mode
+                selcted_cloud += 1
+                if selcted_cloud > 44:
+                    selcted_cloud = 1
 
             print(Color.BOLD + "\n------------------------------------" + Color.END)
 
