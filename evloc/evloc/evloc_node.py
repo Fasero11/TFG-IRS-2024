@@ -14,9 +14,9 @@ from math import pi
 
 import warnings
 
-##############################
-##############################
-##############################
+############################################################
+############################################################
+############################################################
 
 # Filter out the RuntimeWarning for invalid value encountered in divide
 # For when NaN is calculated in add_noise_to_pc.
@@ -786,7 +786,7 @@ def save_error_data(id_cloud, algorithm_type, user_NPini, user_iter_max, D, F, C
     if not os.path.exists(filepath):
         with open(filepath, mode='w', newline='') as archivo_csv:
             escritor_csv = csv.writer(archivo_csv)
-            escritor_csv.writerow(['id_cloud', 'algorithm_type', 'user_NPini', 'user_iter_max', 'D', 'F', 'CR', 'time', 'it', 'poserror', 'orierror_1', 'orierror_2', 'orierror_2'])
+            escritor_csv.writerow(['id_cloud', 'algorithm', 'NPini', 'iter_max', 'D', 'F', 'CR', 'time', 'it', 'poserror', 'orierror_1', 'orierror_2', 'orierror_2'])
 
 
     # Escribir los datos en el archivo CSV
@@ -808,9 +808,9 @@ def save_error_data(id_cloud, algorithm_type, user_NPini, user_iter_max, D, F, C
     print(f"orierror: {orierror}\n")
     print(Color.BOLD + f"Data Saved in {filepath}" + Color.END + "\n")
 
-##############################
-##############################
-##############################
+############################################################
+############################################################
+############################################################
 
 class PCDPublisher(Node):
 
