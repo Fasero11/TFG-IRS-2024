@@ -32,6 +32,7 @@ data_sorted = data.sort_values(by='id_cloud')
 unique_ids = data_sorted['id_cloud'].unique()
 
 # Iterar sobre los valores únicos de la primera columna
+print(Color.YELLOW + "\nESTADÍSTICAS: \n" + Color.END)
 for unique_id in unique_ids:
     # Filtrar el DataFrame por el valor único de la primera columna
     filtered_data = data_sorted[data_sorted['id_cloud'] == unique_id]
