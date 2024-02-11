@@ -1,6 +1,12 @@
 import pandas as pd
 import os
 
+# Límites de convergencia
+POSERROR_THRESHOLD = 0.5
+ORIERRROR_1_THRESHOLD = 5
+ORIERRROR_2_THRESHOLD = 5
+ORIERRROR_3_THRESHOLD = 5
+
 # ANSI color escape codes
 class Color:
     PURPLE = '\033[95m'
@@ -14,14 +20,11 @@ class Color:
     UNDERLINE = '\033[4m'
     END = '\033[0m'
 
-# Obtener la ruta del directorio HOME
 home_route = os.path.expanduser("~")
 
-# Definir la ruta del archivo CSV
 filename = "errordata.csv"
 filepath = os.path.join(home_route, filename)
 
-# Cargar el archivo CSV en un DataFrame de pandas
 data = pd.read_csv(filepath)
 
 # Ordenar el DataFrame por la primera columna (ID del objeto)
@@ -32,12 +35,6 @@ unique_ids = data_sorted['id_cloud'].unique()
 
 # Crear un diccionario para almacenar el recuento de errores y el número total de muestras por grupo
 error_counts = {}
-
-# Umbrales para las columnas
-POSERROR_THRESHOLD = 0.5
-ORIERRROR_1_THRESHOLD = 5
-ORIERRROR_2_THRESHOLD = 5
-ORIERRROR_3_THRESHOLD = 5
 
 # Iterar sobre los valores únicos de la primera columna
 for unique_id in unique_ids:
