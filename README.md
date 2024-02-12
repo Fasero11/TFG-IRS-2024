@@ -6,9 +6,9 @@ This project implements evolutive localization in ROS2.
 
 ## How to Run
 
-1. Create a folder. Inside the folder, create a `src` subfolder.
+1. Create a parent folder. Inside the folder, create a `src` subfolder.
 2. Clone the repository inside the `src` folder.
-3. From the initial folder (where `src` is located), run:
+3. From the parent folder (where `src` is located), run:
 
     ```bash
     colcon build --symlink-install
