@@ -47,4 +47,4 @@ You can run `convergences.py` to see how many times each point cloud converges.
 
 ## License
 
-[MIT License](LICENSE)
+[License](LICENSE)
