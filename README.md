@@ -37,7 +37,7 @@ This project implements evolutive localization in ROS2.
 You can visualize the results in RViz. Just type `rviz2` in the terminal and open the configuration file. Alternatively, you can subscribe to the `/evloc_global` and `/evloc_local` topics.
 
 Data will be saved in an `errordata.csv` file in your HOME directory. You can run `averages.py` for a better visualization of this data.
-You can run `convergences.py` to see how many times each point cloud converges.
+You can run `convergences.py` to see how many times each point cloud converges (Be sure to have the `errordata.csv` file in your HOME directory).
 
 ## Screenshots
 
