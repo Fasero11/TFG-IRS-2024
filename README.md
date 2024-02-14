@@ -51,6 +51,7 @@ You can run `convergences.py` to see how many times each point cloud converges (
 - Pandas 2.2.0
 - numpy 1.26.4
 - open3d 0.18.0
+- setuptools 58.2.0
 
 
 ## License
