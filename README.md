@@ -8,7 +8,8 @@ This project implements evolutive localization in ROS2.
 
 1. Create a parent folder. Inside the folder, create a `src` subfolder.
 2. Clone the repository inside the `src` folder.
-3. From the parent folder (where `src` is located), run:
+3. Extract the `map_global_ori.ply` file from `map_global_ori.rar` and place it in  `evloc/resources`
+4. From the parent folder (where `src` is located), run:
 
     ```bash
     colcon build --symlink-install
@@ -16,13 +17,13 @@ This project implements evolutive localization in ROS2.
 
     Since we are using Python, which doesn't need to be compiled, we can modify the files and rerun the node without needing to rebuild thanks to the `--symlink-install` flag. When the build is finished, three new folders will have been created alongside `src`: `build`, `install`, and `log`.
 
-4. Source the workspace:
+5. Source the workspace:
 
     ```bash
     source install/setup.bash
     ```
 
-5. Run the node:
+6. Run the node:
 
     ```bash
     ros2 run evloc evloc_node
