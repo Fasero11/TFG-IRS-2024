@@ -3,9 +3,9 @@ import os
 
 # Límites de convergencia
 POSERROR_THRESHOLD = 0.5
-ORIERRROR_1_THRESHOLD = 5
-ORIERRROR_2_THRESHOLD = 5
-ORIERRROR_3_THRESHOLD = 5
+ORIERRROR_1_THRESHOLD = 5.0
+ORIERRROR_2_THRESHOLD = 5.0
+ORIERRROR_3_THRESHOLD = 5.0
 
 # ANSI color escape codes
 class Color:
@@ -54,6 +54,7 @@ for unique_id in unique_ids:
     error_counts[unique_id] = (error_count, total_samples)
 
 # Imprimir la proporción de veces que se cumple la condición sobre el número total de muestras para cada grupo
+print(Color.CYAN + f"\nErrores máximos para convergencia [posición, alfa, beta, theta]: {POSERROR_THRESHOLD}m, {ORIERRROR_1_THRESHOLD}º, {ORIERRROR_2_THRESHOLD}º, {ORIERRROR_3_THRESHOLD}º" + Color.END)
 print(Color.YELLOW + "\nNumero de veces que converge cada nube de puntos:" + Color.END)
 for unique_id, (error_count, total_samples) in error_counts.items():
     if total_samples > 0:
