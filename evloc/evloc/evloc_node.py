@@ -547,7 +547,7 @@ def gl_6dof(map_global, scancloud, groundtruth, algorithm, version_fitness, err_
     mapmin=[x_min, y_min, z_min, -0.1, -0.1,-pi]
     mapmax=[x_max, y_max, z_max, 0.1, 0.1, pi]
 
-    real_scan = add_noise_to_pc(scancloud, err_dis, unif_noise) # añadir ruido de sensor y de ambiente al scan
+    real_scan = add_noise_to_pc(scancloud, err_dis, unif_noise) # Add enviroment and sensor noises to scan
 
 
     print(Color.GREEN + f'\nPosicion real del robot[x, y, z, alpha, beta, theta]: ' +
@@ -557,7 +557,7 @@ def gl_6dof(map_global, scancloud, groundtruth, algorithm, version_fitness, err_
     initial_time = time.time()
 
     #--------------------------------------------------------------------------------------------
-    # EJECUCION DEL ALGORITMO EVOLUTIVO
+    # EXECUTION OF THE EVOLUTIVE ALGORITHM
 
     if (algorithm.type == 1): # Differential Evolution
         NPini=algorithm.NPini
@@ -613,6 +613,10 @@ def get_groundtruth_data(GROUNDTRUTH_FILE_PATH, id_cloud):
         print("La fila especificada excede el número de filas en el archivo CSV.")
 
 def ask_cloud():
+    """
+    Asks the user for the ID of the desired Local Cloud and returns it
+    """
+
     num_clouds = len(os.listdir(LOCAL_CLOUDS_FOLDER))
 
     print(Color.BOLD + f'\nAvailable scans [1-{num_clouds}]' + Color.END)
@@ -632,6 +636,14 @@ def ask_cloud():
     return id_cloud
 
 def ask_params():
+    """
+    Asks the user for the desired algorithm parameters and returns them.
+    laser error,
+    uniform error,
+    population size,
+    max iterations,
+    algortihm type and version fitness are set to default.
+    """
     # Simulated laser error
     err_dis = input(Color.BOLD + "\nSensor noise (%): " + Color.END)
     if not err_dis.strip():
