@@ -612,6 +612,109 @@ def get_groundtruth_data(GROUNDTRUTH_FILE_PATH, id_cloud):
     except StopIteration:
         print("La fila especificada excede el número de filas en el archivo CSV.")
 
+def ask_cloud():
+    num_clouds = len(os.listdir(LOCAL_CLOUDS_FOLDER))
+
+    print(Color.BOLD + f'\nAvailable scans [1-{num_clouds}]' + Color.END)
+    id_cloud = input(Color.BOLD + "Select cloud as real scan: " + Color.END)
+    if not id_cloud.strip():
+        id_cloud = 9
+        print(f'Default selected cloud: {id_cloud}')
+    try:
+        if int(id_cloud) > num_clouds or int(id_cloud) < 1:
+            print(f'Error. Selected cloud ({id_cloud}) does not exist.') 
+            exit(1)
+
+    except ValueError as e:
+        print(f'Error: Invalid Number. {e}')
+        exit(1)
+
+    return id_cloud
+
+def ask_params():
+    # Simulated laser error
+    err_dis = input(Color.BOLD + "\nSensor noise (%): " + Color.END)
+    if not err_dis.strip():
+        err_dis = 0
+        print(f'Default Noise: {err_dis}%')
+    else:
+        try:
+            err_dis = int(err_dis)
+            
+            if err_dis > 100 or err_dis < 0:
+                print(f'Error. Selected error ({err_dis}) is invalid.') 
+                exit(1)
+
+            err_dis = err_dis/100
+
+        except ValueError as e:
+            print(f'Error: Invalid Input. {e}')
+            exit(1)
+
+    # Simulated environmental noise
+    unif_noise = input(Color.BOLD + "\nEnvironmental noise (Uniform distribution) (%): " + Color.END)
+    if not unif_noise.strip():
+        unif_noise = 0
+        print(f'Default Noise: 0%')
+    else:
+        try:
+            unif_noise = int(unif_noise)
+            
+            if unif_noise > 100 or unif_noise < 0:
+                print(f'Error. Selected error ({unif_noise}) is invalid.') 
+                exit(1)
+
+            unif_noise = unif_noise/100
+
+        except ValueError as e:
+            print(f'Error: Invalid Input. {e}')
+            exit(1)
+
+    # Algorithm selection
+    algorithm_type = 1 # Differential Evolution (default)
+
+    # Fitness Function Options:
+    version_fitness = 1 # Sum of the squared errors (Default)
+
+    ## ALGORITHM PARAMETERS SECTION ##
+    print(Color.BOLD + f'\nDifferential Evolution parameters:\n' + Color.END)
+
+    # Population size
+    user_NPini = input(Color.BOLD + "Population size: " + Color.END)
+    if not user_NPini.strip():
+        user_NPini = 100
+        print(f'Default population is {user_NPini}')
+    else:
+        try:
+            user_NPini = int(user_NPini)
+            
+            if user_NPini <= 0:
+                print(f'Error. Selected error ({user_NPini}) is invalid.') 
+                exit(1)
+
+        except ValueError as e:
+            print(f'Error: Invalid Input. {e}')
+            exit(1)
+
+    # Max Iterations
+    user_iter_max = input(Color.BOLD + "\nMax. iterations: " + Color.END)
+    if not user_iter_max.strip():
+        user_iter_max = 500
+        print(f'Default iteration max is {user_iter_max}')
+    else:
+        try:
+            user_iter_max = int(user_iter_max)
+            
+            if user_iter_max <= 0:
+                print(f'Error. Selected error ({user_iter_max}) is invalid.') 
+                exit(1)
+
+        except ValueError as e:
+            print(f'Error: Invalid Input. {e}')
+            exit(1)
+
+    return (err_dis, unif_noise, algorithm_type, version_fitness, user_NPini, user_iter_max)
+
 def generate_point_cloud(auto=False,
                          id_cloud = 9,
                          err_dis = 0, 
@@ -630,22 +733,6 @@ def generate_point_cloud(auto=False,
 
     map_global_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_ori.ply")
 
-    num_clouds = len(os.listdir(LOCAL_CLOUDS_FOLDER))
-    if (not auto):
-        print(Color.BOLD + f'\nAvailable scans [1-{num_clouds}]' + Color.END)
-        id_cloud = input(Color.BOLD + "Select cloud as real scan: " + Color.END)
-        if not id_cloud.strip():
-            id_cloud = 9
-            print(f'Default selected cloud: {id_cloud}')
-        try:
-            if int(id_cloud) > num_clouds or int(id_cloud) < 1:
-                print(f'Error. Selected cloud ({id_cloud}) does not exist.') 
-                exit(1)
-
-        except ValueError as e:
-            print(f'Error: Invalid Number. {e}')
-            exit(1)
-
     # SELECT LOCAL POINTCLOUD
     real_scan_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/local_clouds/cloud_{id_cloud}.ply")
 
@@ -658,90 +745,8 @@ def generate_point_cloud(auto=False,
     real_scan = real_scan_ori.uniform_down_sample(every_k_points=int(1 / DOWN_SAMPLING_FACTOR))         # User Selected PointCloud (Local Map)
 
     # Variables introduced via keyboard # (Only if not in auto mode)
-    if (not auto):
-        # Simulated laser error
-        err_dis = input(Color.BOLD + "\nSensor noise (%): " + Color.END)
-        if not err_dis.strip():
-            err_dis = 0
-            print(f'Default Noise: {err_dis}%')
-        else:
-            try:
-                err_dis = int(err_dis)
-                
-                if err_dis > 100 or err_dis < 0:
-                    print(f'Error. Selected error ({err_dis}) is invalid.') 
-                    exit(1)
-
-                err_dis = err_dis/100
-
-            except ValueError as e:
-                print(f'Error: Invalid Input. {e}')
-                exit(1)
-
-        # Simulated environmental noise
-        unif_noise = input(Color.BOLD + "\nEnvironmental noise (Uniform distribution) (%): " + Color.END)
-        if not unif_noise.strip():
-            unif_noise = 0
-            print(f'Default Noise: 0%')
-        else:
-            try:
-                unif_noise = int(unif_noise)
-                
-                if unif_noise > 100 or unif_noise < 0:
-                    print(f'Error. Selected error ({unif_noise}) is invalid.') 
-                    exit(1)
-
-                unif_noise = unif_noise/100
-
-            except ValueError as e:
-                print(f'Error: Invalid Input. {e}')
-                exit(1)
-
-        # Algorithm selection
-        algorithm_type = 1 # Differential Evolution (default)
-
-        # Fitness Function Options:
-        version_fitness = 1 # Sum of the squared errors (Default)
-
-        ## ALGORITHM PARAMETERS SECTION ##
-        print(Color.BOLD + f'\nDifferential Evolution parameters:\n' + Color.END)
-
-        # Population size
-        user_NPini = input(Color.BOLD + "Population size: " + Color.END)
-        if not user_NPini.strip():
-            user_NPini = 100
-            print(f'Default population is {user_NPini}')
-        else:
-            try:
-                user_NPini = int(user_NPini)
-                
-                if user_NPini <= 0:
-                    print(f'Error. Selected error ({user_NPini}) is invalid.') 
-                    exit(1)
-
-            except ValueError as e:
-                print(f'Error: Invalid Input. {e}')
-                exit(1)
-
-        # Max Iterations
-        user_iter_max = input(Color.BOLD + "\nMax. iterations: " + Color.END)
-        if not user_iter_max.strip():
-            user_iter_max = 500
-            print(f'Default iteration max is {user_iter_max}')
-        else:
-            try:
-                user_iter_max = int(user_iter_max)
-                
-                if user_iter_max <= 0:
-                    print(f'Error. Selected error ({user_iter_max}) is invalid.') 
-                    exit(1)
-
-            except ValueError as e:
-                print(f'Error: Invalid Input. {e}')
-                exit(1)
-
-    else:
-        print("\n" + Color.DARKCYAN + "Auto mode enabled. Ignoring user inputs" + Color.END)
+    if (auto):
+        print("\n" + Color.DARKCYAN + f"Auto mode enabled. {id_cloud}/{len(os.listdir(LOCAL_CLOUDS_FOLDER))}" + Color.END)
 
     print(Color.BOLD + "\nFINAL ALGORITHM PARAMETERS: " + Color.END)
     print(f"Local Cloud: {id_cloud}")
@@ -821,18 +826,33 @@ class PCDPublisher(Node):
         self.declare_parameter('auto', False)
 
         self.auto_mode = self.get_parameter('auto').value
-        print(f"\nAuto Mode: {self.auto_mode}")
+        print(Color.CYAN + f"\nAuto Mode: {self.auto_mode}" + Color.END)
 
         self.pcd_publisher_local = self.create_publisher(sensor_msgs.PointCloud2, 'evloc_local', 10)
         self.pcd_publisher_global = self.create_publisher(sensor_msgs.PointCloud2, 'evloc_global', 10)
 
     def run(self):
         selcted_cloud = 1
+        # Ask once before starting if in auto mode.
+        if self.auto_mode:
+            err_dis, unif_noise, algorithm_type, version_fitness, user_NPini, user_iter_max = ask_params()
         while True:
 
             print(Color.BOLD + "\n------------------------------------" + Color.END)
 
-            points = generate_point_cloud(auto = self.auto_mode, id_cloud = selcted_cloud) ## True for Auto Mode (No user input required)
+            # Ask every iteration if not in auto mode.
+            if not self.auto_mode:
+                selcted_cloud = ask_cloud()
+                err_dis, unif_noise, algorithm_type, version_fitness, user_NPini, user_iter_max = ask_params()
+
+            points = generate_point_cloud(auto=self.auto_mode,
+                                          id_cloud = selcted_cloud,
+                                          err_dis = err_dis, 
+                                          unif_noise = unif_noise,
+                                          algorithm_type = algorithm_type,
+                                          version_fitness = version_fitness,
+                                          user_NPini = user_NPini,
+                                          user_iter_max = user_iter_max)
 
             if points is None:
                 print("Error generating point cloud.")
