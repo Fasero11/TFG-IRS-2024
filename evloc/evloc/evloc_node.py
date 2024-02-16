@@ -612,11 +612,18 @@ def get_groundtruth_data(GROUNDTRUTH_FILE_PATH, id_cloud):
     except StopIteration:
         print("La fila especificada excede el número de filas en el archivo CSV.")
 
-def ask_cloud():
+def ask_params():
     """
-    Asks the user for the ID of the desired Local Cloud and returns it
+    Asks the user for the desired algorithm parameters and returns them.
+    local cloud ID,
+    laser error,
+    uniform error,
+    population size,
+    max iterations,
+    algortihm type and version fitness are set to default.
     """
 
+    # Local Cloud
     num_clouds = len(os.listdir(LOCAL_CLOUDS_FOLDER))
 
     print(Color.BOLD + f'\nAvailable scans [1-{num_clouds}]' + Color.END)
@@ -633,17 +640,8 @@ def ask_cloud():
         print(f'Error: Invalid Number. {e}')
         exit(1)
 
-    return id_cloud
+    id_cloud = int(id_cloud)
 
-def ask_params():
-    """
-    Asks the user for the desired algorithm parameters and returns them.
-    laser error,
-    uniform error,
-    population size,
-    max iterations,
-    algortihm type and version fitness are set to default.
-    """
     # Simulated laser error
     err_dis = input(Color.BOLD + "\nSensor noise (%): " + Color.END)
     if not err_dis.strip():
@@ -725,7 +723,7 @@ def ask_params():
             print(f'Error: Invalid Input. {e}')
             exit(1)
 
-    return (err_dis, unif_noise, algorithm_type, version_fitness, user_NPini, user_iter_max)
+    return (id_cloud, err_dis, unif_noise, algorithm_type, version_fitness, user_NPini, user_iter_max)
 
 def generate_point_cloud(auto=False,
                          id_cloud = 9,
@@ -844,21 +842,19 @@ class PCDPublisher(Node):
         self.pcd_publisher_global = self.create_publisher(sensor_msgs.PointCloud2, 'evloc_global', 10)
 
     def run(self):
-        selcted_cloud = 1
         # Ask once before starting if in auto mode.
         if self.auto_mode:
-            err_dis, unif_noise, algorithm_type, version_fitness, user_NPini, user_iter_max = ask_params()
+            id_cloud, err_dis, unif_noise, algorithm_type, version_fitness, user_NPini, user_iter_max = ask_params()
         while True:
 
             print(Color.BOLD + "\n------------------------------------" + Color.END)
 
             # Ask every iteration if not in auto mode.
             if not self.auto_mode:
-                selcted_cloud = ask_cloud()
-                err_dis, unif_noise, algorithm_type, version_fitness, user_NPini, user_iter_max = ask_params()
+                id_cloud, err_dis, unif_noise, algorithm_type, version_fitness, user_NPini, user_iter_max = ask_params()
 
             points = generate_point_cloud(auto=self.auto_mode,
-                                          id_cloud = selcted_cloud,
+                                          id_cloud = id_cloud,
                                           err_dis = err_dis, 
                                           unif_noise = unif_noise,
                                           algorithm_type = algorithm_type,
@@ -879,9 +875,9 @@ class PCDPublisher(Node):
                     break
             else:
                 # Loop for every cloud when in auto mode
-                selcted_cloud += 1
-                if selcted_cloud > 44:
-                    selcted_cloud = 1
+                id_cloud += 1
+                if id_cloud > 44:
+                    id_cloud = 1
 
             print(Color.BOLD + "\n------------------------------------" + Color.END)
 
