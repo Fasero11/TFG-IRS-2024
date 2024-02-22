@@ -417,7 +417,7 @@ def pso_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D, w, wdamp, c1, c2,
 
         # Display evolution each 10 iterations
         if count == 10:
-            print(f"\n It: {it}, Best: {GlobalBest.Cost}, Worse: {worstParticleCost}, Average: {sumcosts/nPop}, Best/measure: {bestParticleCost/nPop}, Worse/best: {worstParticleCost/bestParticleCost}, Avg/best: {sumcosts/nPop/bestParticleCost} \n Posicion (x, y, z, alpha, beta, theta): [{GlobalBest.Position[0]}, {GlobalBest.Position[1]}, {GlobalBest.Position[2]}, {GlobalBest.Position[3]}, {GlobalBest.Position[4]}, {GlobalBest.Position[5]}]")
+            print(f"\nIt: {it}, {Color.GREEN}Best: {round(GlobalBest.Cost, 4)}{Color.END}, {Color.RED}Worse: {round(worstParticleCost,4)}{Color.END}, {Color.YELLOW}Average: {round(sumcosts/nPop,4)}{Color.END}, Best/measure: {round(bestParticleCost/nPop,4)}, Worse/best: {round(worstParticleCost/bestParticleCost,4)}, Avg/best: {round(sumcosts/nPop/bestParticleCost,4)} \n Position (x, y, z, alpha, beta, theta): [{round(GlobalBest.Position[0],4)}, {round(GlobalBest.Position[1],4)}, {round(GlobalBest.Position[2],4)}, {round(GlobalBest.Position[3],4)}, {round(GlobalBest.Position[4],4)}, {round(GlobalBest.Position[5],4)}]\n")
             count=0
         count=count+1
         end_time = time.time()
@@ -1178,7 +1178,7 @@ def generate_point_cloud(auto=False,
         print("\n" + Color.DARKCYAN + f"Auto mode enabled. {id_cloud}/{len(os.listdir(LOCAL_CLOUDS_FOLDER))}" + Color.END)
 
     print(Color.BOLD + "\nFINAL ALGORITHM PARAMETERS: " + Color.END)
-    
+
     if algorithm_type == 1:
         print(f"Algortihm type: 1 (DE)")
     elif algorithm_type == 2:
