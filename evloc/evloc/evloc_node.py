@@ -1079,7 +1079,7 @@ def ask_params():
             exit(1)
 
     # Algorithm selection
-    algorithm_type = input(Color.BOLD + "\nIntroduce the Evolutionary Algorithm that you want to apply: \n 1) DE - Differential Evolution (Default). \n 2) PSO - Particle Swarm Optimization: " + Color.END)
+    algorithm_type = input(Color.BOLD + "\nIntroduce the Evolutionary Algorithm that you want to apply: \n 1) DE - Differential Evolution (Default). \n 2) PSO - Particle Swarm Optimization.\n" + Color.END)
     if not algorithm_type.strip():
         algorithm_type = 1
         print(f'\t Option 1 (DE) by default.')
@@ -1215,12 +1215,12 @@ def generate_point_cloud(auto=False,
         abs((groundtruth[5] - solution.pose_estimate[5]) * 180 / pi)
     ]
 
-    save_error_data(id_cloud, algorithm_type, user_NPini, user_iter_max, D, F, CR, solution.time, solution.it, poserror, orierror)
+    save_error_data(id_cloud, algorithm_type, user_NPini, user_iter_max, D, F, CR, solution.time, solution.it, poserror, orierror, w, wdamp, c1, c2)
 
     return sol_points
 
 
-def save_error_data(id_cloud, algorithm_type, user_NPini, user_iter_max, D, F, CR, time, it, poserror, orierror):
+def save_error_data(id_cloud, algorithm_type, user_NPini, user_iter_max, D, F, CR, time, it, poserror, orierror, w, wdamp, c1, c2):
     """
     Saves the solution in the $HOME directory as a .csv file
     """
@@ -1234,14 +1234,17 @@ def save_error_data(id_cloud, algorithm_type, user_NPini, user_iter_max, D, F, C
     if not os.path.exists(filepath):
         with open(filepath, mode='w', newline='') as archivo_csv:
             escritor_csv = csv.writer(archivo_csv)
-            escritor_csv.writerow(['id_cloud', 'algorithm', 'NPini', 'iter_max', 'D', 'F', 'CR', 'time', 'it', 'poserror', 'orierror_1', 'orierror_2', 'orierror_2'])
+            escritor_csv.writerow(['id_cloud', 'algorithm', 'NPini', 'iter_max', 'D', 'F', 'CR', 'w', 'wdamp', 'c1', 'c2', 'time', 'it', 'poserror', 'orierror_1', 'orierror_2', 'orierror_2'])
 
 
     # Escribir los datos en el archivo CSV
     with open(filepath, mode='a', newline='') as archivo_csv:
         escritor_csv = csv.writer(archivo_csv)
-        escritor_csv.writerow([id_cloud] + [algorithm_type] + [user_NPini] + [user_iter_max] + [D] + [F] + [CR] + [time] + [it] + [poserror] + orierror)
-    
+        if algorithm_type == 1:
+            escritor_csv.writerow([id_cloud] + [algorithm_type] + [user_NPini] + [user_iter_max] + [D] + [F] + [CR] + [None] + [None] + [None] + [None] + [time] + [it] + [poserror] + orierror)
+        if algorithm_type == 2:
+            escritor_csv.writerow([id_cloud] + [algorithm_type] + [user_NPini] + [user_iter_max] + [D] + [None] + [None] + [w] + [wdamp] + [c1] + [c2] + [time] + [it] + [poserror] + orierror)
+
     print("\n"+Color.BOLD + "SUMMARY:" + Color.END)
     print(f"id_cloud: {id_cloud}")
     print(f"algorithm_type: {algorithm_type}")
