@@ -47,6 +47,7 @@ You can run `convergences.py` to see how many times each point cloud converges (
 ![Screenshot 2](https://github.com/Fasero11/TFG-IRS-2024/assets/86266311/c74ad795-a647-4fa1-a4d4-06d8ea117fd9)
 
 ## Dependencies (Versions used for design and testing)
+- Ubuntu 22.04
 - ROS2-Humble
 - Python 3.10.12
 - Pandas 2.2.0
