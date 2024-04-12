@@ -48,6 +48,7 @@ You can run `convergences.py` to see how many times each point cloud converges (
   - Always execute `xhost +local:docker` before launching the container
   - Add `--net=host`, `--pid=host`, and `--ipc=host` to docker run command
   - To subscribe to the topics outside the container you need to have the same user ID (UID) on both the container and the outside shell (probably UID=0 root).
+  - For teleop use `ros2 run teleop_twist_keyboard teleop_twist_keyboard`
 
 - Repository: [lidarslam_ros2](https://github.com/rsasaki0109/lidarslam_ros2)
 
