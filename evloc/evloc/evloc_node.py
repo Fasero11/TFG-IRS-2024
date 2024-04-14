@@ -60,6 +60,19 @@ def get_groundtruth_data(GROUNDTRUTH_FILE_PATH, id_cloud):
     except StopIteration:
         print("La fila especificada excede el número de filas en el archivo CSV.")
 
+def filter_map_height(map, z_min, z_max):
+
+    # Create a crop box to keep only the points between z_min and z_max
+    crop_box = o3d.geometry.AxisAlignedBoundingBox(
+        min_bound=(-float('inf'), -float('inf'), z_min),
+        max_bound=(float('inf'), float('inf'), z_max)
+    )
+
+    # Apply the crop to the point cloud
+    filtered_map = map.crop(crop_box)
+
+    return filtered_map
+
 ############################################################
 ########################## MAIN ############################
 ############################################################
@@ -124,14 +137,18 @@ class PCD(Node):
                     print("Waiting for local scan...")
                     rclpy.spin_once(self)
                 
-                map_global = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_sim.pcd")
+                map_global_unfiltered = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_sim.pcd")
+                map_global = filter_map_height(map_global_unfiltered, -0.2, 1.5)
+
                 real_groundtruth = np.full((6,), -1) # TODO: Get real robot pose
 
                 # Transform map_local datatype
                 points = read_points(self.cloud_points, skip_nans=True, field_names=("x", "y", "z"))
                 point_list = np.array(list(points))
-                map_local = o3d.geometry.PointCloud()
-                map_local.points = o3d.utility.Vector3dVector(point_list)
+                map_local_unfiltered = o3d.geometry.PointCloud()
+                map_local_unfiltered.points = o3d.utility.Vector3dVector(point_list)
+                map_local = filter_map_height(map_local_unfiltered, -0.2, 1.5)
+
             else:
                 map_global_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_ori.ply")
                 real_scan_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/local_clouds/cloud_{id_cloud}.ply")
@@ -139,13 +156,13 @@ class PCD(Node):
                 map_local = real_scan_ori.uniform_down_sample(every_k_points=int(1 / DOWN_SAMPLING_FACTOR))         # User Selected PointCloud (Local Map)
                 real_groundtruth = get_groundtruth_data(GROUNDTRUTH_FILE_PATH, id_cloud)              
 
-            #TEST MAP PUBLISHING
-            # points = np.asarray(map_global.points) # Downsampling. Son demasiados puntos para RVIZ
+            # #TEST MAP PUBLISHING
+            # points = np.asarray(map_global.points)
             # pcd_global = self.point_cloud(points, 'map')
             # self.pcd_publisher_global.publish(pcd_global)
             # print(f"Global PointCloud with dimensions {points.shape} has been published.")
 
-            # points2 = np.asarray(map_local.points) # Downsampling. Son demasiados puntos para RVIZ
+            # points2 = np.asarray(map_local.points)
             # pcd_local = self.point_cloud(points2, 'map')
             # self.pcd_publisher_local.publish(pcd_local)
             # print(f"Local PointCloud with dimensions {points2.shape} has been published.")
