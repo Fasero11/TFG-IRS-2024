@@ -15,6 +15,7 @@ setup(
         (f'share/{package_name}/resources/local_clouds', glob.glob('resources/local_clouds/*')),
         (f'share/{package_name}/resources', glob.glob('resources/map_global_ori.ply')),
         (f'share/{package_name}/resources', glob.glob('resources/map_global_sim.pcd')),
+        (f'share/{package_name}/resources', glob.glob('resources/map_global_sim_empty.pcd')),
         (f'share/{package_name}/resources', glob.glob('resources/groundtruth_data.csv'))
   
     ],

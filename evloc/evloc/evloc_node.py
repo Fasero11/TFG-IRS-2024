@@ -138,7 +138,7 @@ class PCD(Node):
                     rclpy.spin_once(self)
                 
                 map_global_unfiltered = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_sim.pcd")
-                map_global = filter_map_height(map_global_unfiltered, -0.2, 1.5)
+                map_global = filter_map_height(map_global_unfiltered, 0, 1.35)
 
                 real_groundtruth = np.full((6,), -1) # TODO: Get real robot pose
 
@@ -147,7 +147,7 @@ class PCD(Node):
                 point_list = np.array(list(points))
                 map_local_unfiltered = o3d.geometry.PointCloud()
                 map_local_unfiltered.points = o3d.utility.Vector3dVector(point_list)
-                map_local = filter_map_height(map_local_unfiltered, -0.2, 1.5)
+                map_local = filter_map_height(map_local_unfiltered, 0, 1.35)
 
             else:
                 map_global_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_ori.ply")
