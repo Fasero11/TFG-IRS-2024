@@ -101,15 +101,8 @@ class PCD(Node):
 
     def listener_callback(self, msg):
         self.cloud_points = msg
-        self.get_logger().info('Tipo de datos de self.cloud_points: %s' % type(self.cloud_points))
 
     def run(self):
-        # while True:
-        #     rclpy.spin_once(self)
-        #     self.pcd_publisher_global.publish(self.cloud_points)
-        #     num_points = len(self.cloud_points.data)
-        #     print(f"Global PointCloud with dimensions {num_points} has been published.")
-
         # Ask once before starting if in auto mode.
         if self.auto_mode:
             id_cloud, err_dis, unif_noise, algorithm_type, version_fitness, user_NPini, user_iter_max = ask_params(self.simulated)
