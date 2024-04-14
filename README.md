@@ -40,6 +40,19 @@ You can visualize the results in RViz. Just type `rviz2` in the terminal and ope
 Data will be saved in an `errordata.csv` file in your HOME directory. You can run `averages.py` for a better visualization of this data.
 You can run `convergences.py` to see how many times each point cloud converges (Be sure to have the `errordata.csv` file in your HOME directory).
 
+
+## Run in simulation
+
+- Repository: [Multi-turtlebot3-Gazebo-ROS2](https://github.com/Taeyoung96/Multi-turtlebot3-Gazebo-ROS2)
+  - Add `--volume=/dev/shm:/dev/shm` to the docker run command
+  - Always execute `xhost +local:docker` before launching the container
+  - Add `--net=host`, `--pid=host`, and `--ipc=host` to docker run command
+  - To subscribe to the topics outside the container you need to have the same user ID (UID) on both the container and the outside shell (probably UID=0 root).
+  - For teleop use `ros2 run teleop_twist_keyboard teleop_twist_keyboard`
+
+- Repository: [lidarslam_ros2](https://github.com/rsasaki0109/lidarslam_ros2)
+
+
 ## Screenshots
 
 ![Screenshot 1](https://github.com/Fasero11/TFG-IRS-2024/assets/86266311/6ea2ade6-6c87-43a7-930a-0ff16330e3f0)
@@ -47,6 +60,7 @@ You can run `convergences.py` to see how many times each point cloud converges (
 ![Screenshot 2](https://github.com/Fasero11/TFG-IRS-2024/assets/86266311/c74ad795-a647-4fa1-a4d4-06d8ea117fd9)
 
 ## Dependencies (Versions used for design and testing)
+- Ubuntu 22.04
 - ROS2-Humble
 - Python 3.10.12
 - Pandas 2.2.0
