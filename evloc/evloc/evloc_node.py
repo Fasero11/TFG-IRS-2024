@@ -120,7 +120,7 @@ class PCD(Node):
         self.pcd_publisher_local = self.create_publisher(sensor_msgs.PointCloud2, 'evloc_local', 10)
         self.pcd_publisher_global = self.create_publisher(sensor_msgs.PointCloud2, 'evloc_global', 10)
         self.cloud_points = None
-        self.groundtruth = np.full(6, np.inf)  # Se asume que necesitas almacenar 6 valores (x, y, z, roll, pitch, yaw)
+        self.groundtruth = np.full(6, np.inf)
 
 
     def listener_callback(self, msg):
@@ -226,6 +226,10 @@ class PCD(Node):
                 ds_2 = 40
             
             self.publish_point_clouds(points, 'map', map_global, ds_1, ds_2)
+
+            # Reset variables obtained from simulation
+            self.cloud_points = None
+            self.groundtruth = np.full(6, np.inf)
 
             if not self.auto_mode:
                 restart = self.ask_restart()
