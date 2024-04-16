@@ -189,8 +189,6 @@ class PCD(Node):
                 map_local = real_scan_ori.uniform_down_sample(every_k_points=int(1 / DOWN_SAMPLING_FACTOR))         # User Selected PointCloud (Local Map)
                 real_groundtruth = get_groundtruth_data(GROUNDTRUTH_FILE_PATH, id_cloud)              
 
-            print(self.groundtruth)
-
             # #TEST MAP PUBLISHING
             # points = np.asarray(map_global.points)
             # pcd_global = self.point_cloud(points, 'map')
