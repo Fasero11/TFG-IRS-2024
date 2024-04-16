@@ -1,11 +1,13 @@
 import rclpy 
 from rclpy.node import Node
 import sensor_msgs.msg as sensor_msgs
+import nav_msgs.msg as nav_msgs
 import std_msgs.msg as std_msgs
 import numpy as np
 import open3d as o3d
 import csv
 import os
+import math
 
 import warnings
 
@@ -108,12 +110,43 @@ class PCD(Node):
             10  # el número de mensajes en la cola
         )
 
+        self.odom_subscriber = self.create_subscription(
+            nav_msgs.Odometry,
+            '/odom',
+            self.odom_callback,
+            10  # el número de mensajes en la cola
+        )
+
         self.pcd_publisher_local = self.create_publisher(sensor_msgs.PointCloud2, 'evloc_local', 10)
         self.pcd_publisher_global = self.create_publisher(sensor_msgs.PointCloud2, 'evloc_global', 10)
         self.cloud_points = None
+        self.groundtruth = np.full(6, np.inf)  # Se asume que necesitas almacenar 6 valores (x, y, z, roll, pitch, yaw)
+
 
     def listener_callback(self, msg):
         self.cloud_points = msg
+
+    def odom_callback(self, msg):
+        self.groundtruth = msg.pose.pose
+
+        # Extraer los valores de posición (X, Y, Z)
+        x = self.groundtruth.position.x
+        y = self.groundtruth.position.y
+        z = self.groundtruth.position.z
+
+        # Extraer los valores de orientación en cuaternión (qx, qy, qz, qw)
+        qx = self.groundtruth.orientation.x
+        qy = self.groundtruth.orientation.y
+        qz = self.groundtruth.orientation.z
+        qw = self.groundtruth.orientation.w
+
+        # Convertir los cuaterniones a ángulos de Euler (A, B, C)
+        # Asegúrate de que los ángulos estén en el rango adecuado (por ejemplo, -pi a pi)
+        roll = math.atan2(2 * (qw * qx + qy * qz), 1 - 2 * (qx**2 + qy**2))
+        pitch = math.asin(2 * (qw * qy - qz * qx))
+        yaw = math.atan2(2 * (qw * qz + qx * qy), 1 - 2 * (qy**2 + qz**2))
+
+        self.groundtruth = np.array([x, y, z, roll, pitch, yaw])
 
     def run(self):
         # Ask once before starting if in auto mode.
@@ -125,7 +158,7 @@ class PCD(Node):
 
             # Ask every iteration if not in auto mode.
             if not self.auto_mode:
-                id_cloud, err_dis, unif_noise, algorithm_type, version_fitness, user_NPini, user_iter_max = ask_params(self.simulated)
+               id_cloud, err_dis, unif_noise, algorithm_type, version_fitness, user_NPini, user_iter_max = ask_params(self.simulated)
 
             map_global = None
             map_local = None
@@ -133,14 +166,14 @@ class PCD(Node):
 
             if (self.simulated):
                 rclpy.spin_once(self) # Read once from subscribed topics
-                while (self.cloud_points == None):
+                while (self.cloud_points == None or np.all(np.isinf(self.groundtruth))):
                     print("Waiting for local scan...")
                     rclpy.spin_once(self)
                 
                 map_global_unfiltered = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_sim.pcd")
                 map_global = filter_map_height(map_global_unfiltered, 0, 1.35)
 
-                real_groundtruth = np.full((6,), -1) # TODO: Get real robot pose
+                real_groundtruth = self.groundtruth
 
                 # Transform map_local datatype
                 points = read_points(self.cloud_points, skip_nans=True, field_names=("x", "y", "z"))
@@ -155,6 +188,8 @@ class PCD(Node):
                 map_global = map_global_ori.uniform_down_sample(every_k_points=int(1 / DOWN_SAMPLING_FACTOR_GLOBAL)) # Original PointCloud (Global Map)
                 map_local = real_scan_ori.uniform_down_sample(every_k_points=int(1 / DOWN_SAMPLING_FACTOR))         # User Selected PointCloud (Local Map)
                 real_groundtruth = get_groundtruth_data(GROUNDTRUTH_FILE_PATH, id_cloud)              
+
+            print(self.groundtruth)
 
             # #TEST MAP PUBLISHING
             # points = np.asarray(map_global.points)
