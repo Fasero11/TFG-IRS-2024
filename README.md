@@ -41,16 +41,23 @@ Data will be saved in an `errordata.csv` file in your HOME directory. You can ru
 You can run `convergences.py` to see how many times each point cloud converges (Be sure to have the `errordata.csv` file in your HOME directory).
 
 
-## Run in simulation
+### Run in Simulation
+To run the evloc node in simulation, you'll first need to map the environment using the SLAM repository and save the global map. Then, you can utilize the evloc node to match the current local scan of the robot with the saved global scan.
+- **Repository:** [Multi-turtlebot3-Gazebo-ROS2](https://github.com/Taeyoung96/Multi-turtlebot3-Gazebo-ROS2)
+  - **IMPORTANT:** This repository operates using a Docker container in which you log in as the user 'root' (UID = 0). When launching the SLAM or the evloc node, ensure that you are logged in as the 'root' user. You can switch to this 'root' user with UID 0 using the following command: `su root`. If the user inside the container and the user outside the container have different UIDs, you won't be able to subscribe to the topics (even if you can see them when running `ros2 topic list`).
+  - Add `--volume=/dev/shm:/dev/shm` to the docker run command.
+  - Always execute `xhost +local:docker` before launching the container.
+  - Add `--net=host`, `--pid=host`, and `--ipc=host` to the docker run command.
+  - To subscribe to the topics outside the container, ensure the same user ID (UID) exists on both the container and the outside shell (probably UID=0 root).
+  - For teleoperation, use `ros2 run teleop_twist_keyboard teleop_twist_keyboard`.
 
-- Repository: [Multi-turtlebot3-Gazebo-ROS2](https://github.com/Taeyoung96/Multi-turtlebot3-Gazebo-ROS2)
-  - Add `--volume=/dev/shm:/dev/shm` to the docker run command
-  - Always execute `xhost +local:docker` before launching the container
-  - Add `--net=host`, `--pid=host`, and `--ipc=host` to docker run command
-  - To subscribe to the topics outside the container you need to have the same user ID (UID) on both the container and the outside shell (probably UID=0 root).
-  - For teleop use `ros2 run teleop_twist_keyboard teleop_twist_keyboard`
 
-- Repository: [lidarslam_ros2](https://github.com/rsasaki0109/lidarslam_ros2)
+#### SLAM Repository
+- **Repository:** [lidarslam_ros2](https://github.com/rsasaki0109/lidarslam_ros2) 
+  - First, initialize the SLAM: `ros2 launch lidarslam lidarslam.launch.py`. This will open a rviz instance.
+  - Then, move the robot around with teleoperation; you can visualize the map being saved on rviz.
+  - To save the map, use: `ros2 service call /map_save std_srvs/Empty`. The map will be saved in the location from where you initialized the slam. Then, move this map to the `/resources` directory.
+
 
 
 ## Screenshots
