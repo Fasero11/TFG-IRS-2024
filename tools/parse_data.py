@@ -24,11 +24,11 @@ current_directory = os.path.dirname(__file__)
 parent_directory = os.path.join(current_directory, '..')
 filepath = os.path.join(parent_directory, 'errordata.csv')
 
-MAX_POS_ERROR = 0.5 # In meters
-MAX_ORI_ERROR_1 = 5
-MAX_ORI_ERROR_2 = 5
-MAX_ORI_ERROR_3 = 5
-MAX_ORI_ERROR_COMBINED = 5 # In degrees (mean of three ori errors)
+MAX_POS_ERROR = 0.75 # In meters
+MAX_ORI_ERROR_1 = 10
+MAX_ORI_ERROR_2 = 10
+MAX_ORI_ERROR_3 = 10
+MAX_ORI_ERROR_COMBINED = 10 # In degrees (mean of three ori errors)
 MIN_CONVERGENCE_PERCENTAGE = 75
 ########################################################################
 
@@ -205,6 +205,47 @@ def showBarSimple(dataframe, title, title_x, title_y, max_y_value=None, custom_y
 
 
 
+def showInfo(data_frame, name):
+    num_samples_df = getSampleCounts(data_frame)
+
+    # Calcula las medias para cada algoritmo
+    time_avg_df = getTimeAvg(data_frame)
+
+    it_avg_df = getItAvg(data_frame)
+
+    poserror_avg_df = getPosErrorAvg(data_frame)
+
+    orierror_avg_df = getOriErrorAvg(data_frame)
+
+    conv_perc_df = getConvPerc(data_frame)
+
+    title_x = 'Cloud ID'
+
+    title = f'Convergence percentage per cloud ID for {name} algorithm. ({MAX_POS_ERROR}m, {MAX_ORI_ERROR_1}º, {MAX_ORI_ERROR_2}º, {MAX_ORI_ERROR_3}º)'
+    title_y = 'Convergence percentage'
+    showBarSimple(conv_perc_df, title, title_x, title_y, custom_y_limit=MIN_CONVERGENCE_PERCENTAGE, color_threshold=True)
+
+    title = f'Number of samples per cloud ID for {name} algorithm'
+    title_y = 'Number of samples'
+    showBarSimple(num_samples_df, title, title_x, title_y, custom_y_limit=10)
+
+    title = f'Execution time per cloud ID for {name} algorithm'
+    title_y = 'Execution time (seconds)'
+    showBarSimple(time_avg_df, title, title_x, title_y, color_gradient=True)
+
+    title = f'Iterations per cloud ID for {name} algorithm'
+    title_y = 'Iterations until convergence'
+    showBarSimple(it_avg_df, title, title_x, title_y)
+
+    title = f'Position error (m) per cloud ID for {name} algorithm'
+    title_y = 'Position error in meters'
+    showBarSimple(poserror_avg_df, title, title_x, title_y, custom_y_limit=MAX_POS_ERROR, color_gradient=True)
+
+    title = f'Orientation error per cloud ID for {name} algorithm'
+    title_y = 'Orientation error in meters'
+    showBarSimple(orierror_avg_df, title, title_x, title_y, custom_y_limit=MAX_ORI_ERROR_COMBINED, color_gradient=True)
+
+
 def main():
     data = pd.read_csv(filepath)
 
@@ -228,131 +269,17 @@ def main():
     if user_selection == 1:
         print("Differential Evolution selected")
         de_data = data[data['algorithm'] == 1]
-
-        num_samples_de = getSampleCounts(de_data)
-
-        # Calcula las medias para cada algoritmo
-        time_avg_de = getTimeAvg(de_data)
-
-        it_avg_de = getItAvg(de_data)
-
-        poserror_avg_de = getPosErrorAvg(de_data)
-
-        orierror_avg_de = getOriErrorAvg(de_data)
-
-        conv_perc_de = getConvPerc(de_data)
-
-        title_x = 'Cloud ID'
-
-        title = f'Convergence percentage per cloud ID for DE algorithm. ({MAX_POS_ERROR}m, {MAX_ORI_ERROR_1}º, {MAX_ORI_ERROR_2}º, {MAX_ORI_ERROR_3}º)'
-        title_y = 'Convergence percentage'
-        showBarSimple(conv_perc_de, title, title_x, title_y, custom_y_limit=MIN_CONVERGENCE_PERCENTAGE, color_threshold=True)
-
-        title = 'Number of samples per cloud ID for DE algorithm'
-        title_y = 'Number of samples'
-        showBarSimple(num_samples_de, title, title_x, title_y, custom_y_limit=10)
-
-        title = 'Execution time per cloud ID for DE algorithm'
-        title_y = 'Execution time (seconds)'
-        showBarSimple(time_avg_de, title, title_x, title_y, color_gradient=True)
-
-        title = 'Iterations per cloud ID for DE algorithm'
-        title_y = 'Iterations until convergence'
-        showBarSimple(it_avg_de, title, title_x, title_y)
-
-        title = 'Position error (m) per cloud ID for DE algorithm'
-        title_y = 'Position error in meters'
-        showBarSimple(poserror_avg_de, title, title_x, title_y, custom_y_limit=MAX_POS_ERROR, color_gradient=True)
-
-        title = 'Orientation error per cloud ID for DE algorithm'
-        title_y = 'Orientation error in meters'
-        showBarSimple(orierror_avg_de, title, title_x, title_y, custom_y_limit=MAX_ORI_ERROR_COMBINED, color_gradient=True)
+        showInfo(de_data, 'DE')
 
     elif user_selection == 2:
         print("Particle Swarm Optimization selected")
         pso_data = data[data['algorithm'] == 2]
-
-        num_samples_pso = getSampleCounts(pso_data)
-
-        # Calcula las medias para cada algoritmo
-        time_avg_pso = getTimeAvg(pso_data)
-
-        it_avg_pso = getItAvg(pso_data)
-
-        poserror_avg_pso = getPosErrorAvg(pso_data)
-
-        orierror_avg_pso = getOriErrorAvg(pso_data)
-
-        conv_perc_pso = getConvPerc(pso_data)
-
-        title_x = 'Cloud ID'
-
-        title = f'Convergence percentage per cloud ID for PSO algorithm. ({MAX_POS_ERROR}m, {MAX_ORI_ERROR_1}º, {MAX_ORI_ERROR_2}º, {MAX_ORI_ERROR_3}º)'
-        title_y = 'Convergence percentage'
-        showBarSimple(conv_perc_pso, title, title_x, title_y, custom_y_limit=MIN_CONVERGENCE_PERCENTAGE, color_threshold=True)
-
-        title = 'Number of samples per cloud ID for PSO algorithm'
-        title_y = 'Number of samples'
-        showBarSimple(num_samples_pso, title, title_x, title_y, custom_y_limit=10)
-
-        title = 'Execution time per cloud ID for PSO algorithm'
-        title_y = 'Execution time (seconds)'
-        showBarSimple(time_avg_pso, title, title_x, title_y, color_gradient=True)
-
-        title = 'Iterations per cloud ID for PSO algorithm'
-        title_y = 'Iterations until convergence'
-        showBarSimple(it_avg_pso, title, title_x, title_y)
-
-        title = 'Position error (m) per cloud ID for PSO algorithm'
-        title_y = 'Position error in meters'
-        showBarSimple(poserror_avg_pso, title, title_x, title_y, custom_y_limit=MAX_POS_ERROR, color_gradient=True)
-
-        title = 'Orientation error per cloud ID for PSO algorithm'
-        title_y = 'Orientation error in meters'
-        showBarSimple(orierror_avg_pso, title, title_x, title_y, custom_y_limit=MAX_ORI_ERROR_COMBINED, color_gradient=True)
+        showInfo(pso_data, 'PSO')
 
     elif user_selection == 3:
         print("Invasive Weed Optimization selected")
         iwo_data = data[data['algorithm'] == 3]
-
-        num_samples_iwo = getSampleCounts(iwo_data)
-
-        # Calcula las medias para cada algoritmo
-        time_avg_iwo = getTimeAvg(iwo_data)
-
-        it_avg_iwo = getItAvg(iwo_data)
-
-        poserror_avg_iwo = getPosErrorAvg(iwo_data)
-
-        orierror_avg_iwo = getOriErrorAvg(iwo_data)
-
-        conv_perc_iwo = getConvPerc(iwo_data)
-
-        title_x = 'Cloud ID'
-
-        title = f'Convergence percentage per cloud ID for IWO algorithm. ({MAX_POS_ERROR}m, {MAX_ORI_ERROR_1}º, {MAX_ORI_ERROR_2}º, {MAX_ORI_ERROR_3}º)'
-        title_y = 'Convergence percentage'
-        showBarSimple(conv_perc_iwo, title, title_x, title_y, custom_y_limit=MIN_CONVERGENCE_PERCENTAGE, color_threshold=True)
-
-        title = 'Number of samples per cloud ID for IWO algorithm'
-        title_y = 'Number of samples'
-        showBarSimple(num_samples_iwo, title, title_x, title_y, custom_y_limit=10)
-
-        title = 'Execution time per cloud ID for IWO algorithm'
-        title_y = 'Execution time (seconds)'
-        showBarSimple(time_avg_iwo, title, title_x, title_y, color_gradient=True)
-
-        title = 'Iterations per cloud ID for IWO algorithm'
-        title_y = 'Iterations until convergence'
-        showBarSimple(it_avg_iwo, title, title_x, title_y)
-
-        title = 'Position error (m) per cloud ID for IWO algorithm'
-        title_y = 'Position error in meters'
-        showBarSimple(poserror_avg_iwo, title, title_x, title_y, custom_y_limit=MAX_POS_ERROR, color_gradient=True)
-
-        title = 'Orientation error per cloud ID for IWO algorithm'
-        title_y = 'Orientation error in meters'
-        showBarSimple(orierror_avg_iwo, title, title_x, title_y, custom_y_limit=MAX_ORI_ERROR_COMBINED, color_gradient=True)
+        showInfo(iwo_data, 'IWO')
 
     elif user_selection == 4:
         print("All Selected")
