@@ -253,10 +253,10 @@ def main():
 
     while True:
         user_selection = input(Color.BOLD + f"\nIntroduce the Evolutionary Algorithm that you want to analyze: \n\n"
-                        f"1) DE - Differential Evolution (Default)  -  {al_cont.values[0]} samples\n"
-                        f"2) PSO - Particle Swarm Optimization      -  {al_cont.values[1]} samples\n"
-                        f"3) IWO - Invasive Weed Optimization       -  {al_cont.values[2]} samples\n"
-                        f"4) ALL                                    -  {al_cont.values[0]+al_cont.values[1]+al_cont.values[2]} samples\n"
+                        f"1) DE   -  Differential Evolution       -  {al_cont.values[0]} samples\n"
+                        f"2) PSO  -  Particle Swarm Optimization  -  {al_cont.values[1]} samples\n"
+                        f"3) IWO  -  Invasive Weed Optimization   -  {al_cont.values[2]} samples\n"
+                        f"4) ALL  -  Analyze all algorithms       -  {al_cont.values[0]+al_cont.values[1]+al_cont.values[2]} samples\n"
                         + Color.END)
         
         if user_selection in ['1', '2', '3', '4']:
