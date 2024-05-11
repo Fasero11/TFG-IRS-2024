@@ -25,8 +25,11 @@ parent_directory = os.path.join(current_directory, '..')
 filepath = os.path.join(parent_directory, 'errordata.csv')
 
 MAX_POS_ERROR = 0.5 # In meters
-MAX_ORI_ERROR = 5 # In degrees (mean of three ori errors)
-
+MAX_ORI_ERROR_1 = 5
+MAX_ORI_ERROR_2 = 5
+MAX_ORI_ERROR_3 = 5
+MAX_ORI_ERROR_COMBINED = 5 # In degrees (mean of three ori errors)
+MIN_CONVERGENCE_PERCENTAGE = 75
 ########################################################################
 
 
@@ -34,6 +37,23 @@ MAX_ORI_ERROR = 5 # In degrees (mean of three ori errors)
 def getSampleCounts(data_frame):
     sample_counts = data_frame.groupby('id_cloud').size()
     return sample_counts
+
+
+
+def getConvPerc(data_frame):
+    pos_errors = data_frame['poserror']
+    ori_errors = data_frame[['orierror_1', 'orierror_2', 'orierror_3']]
+
+    # Calcula la condición de convergencia
+    converged = (pos_errors <= MAX_POS_ERROR) & (ori_errors <= [MAX_ORI_ERROR_1, MAX_ORI_ERROR_2, MAX_ORI_ERROR_3]).all(axis=1)
+
+    total_samples = data_frame['id_cloud'].value_counts()
+
+    convergence_counts = converged.groupby(data_frame['id_cloud']).sum()
+
+    convergence_percentage = (convergence_counts / total_samples) * 100
+
+    return convergence_percentage
 
 
 
@@ -137,7 +157,7 @@ def showBarCombined(dataframe, title, title_x, title_y, max_y_value=None,
 
 
 
-def showBarSimple(dataframe, title, title_x, title_y, max_y_value=None, custom_y_limit=None, color_gradient=False):
+def showBarSimple(dataframe, title, title_x, title_y, max_y_value=None, custom_y_limit=None, color_gradient=False, color_threshold=False):
 
     # Graficar los datos con barras
     plt.figure(figsize=(14, 6))
@@ -158,8 +178,12 @@ def showBarSimple(dataframe, title, title_x, title_y, max_y_value=None, custom_y
             color = cmap(norm(y))
             plt.bar(index[i], y, color=color)
     else:
-        # Graficar las barras con un color sólido
-        plt.bar(index, y_data)  # Puedes cambiar 'blue' al color que desees
+        if color_threshold:
+            colors = ['red' if y <= MIN_CONVERGENCE_PERCENTAGE else 'green' for y in y_data]
+            plt.bar(index, y_data, color=colors)
+        else:
+            # Graficar las barras con un color sólido
+            plt.bar(index, y_data)  # Puedes cambiar 'blue' al color que desees
 
     # Configurar etiquetas y título
     plt.xlabel(title_x)
@@ -216,7 +240,13 @@ def main():
 
         orierror_avg_de = getOriErrorAvg(de_data)
 
+        conv_perc_de = getConvPerc(de_data)
+
         title_x = 'Cloud ID'
+
+        title = f'Convergence percentage per cloud ID for DE algorithm. ({MAX_POS_ERROR}m, {MAX_ORI_ERROR_1}º, {MAX_ORI_ERROR_2}º, {MAX_ORI_ERROR_3}º)'
+        title_y = 'Convergence percentage'
+        showBarSimple(conv_perc_de, title, title_x, title_y, custom_y_limit=MIN_CONVERGENCE_PERCENTAGE, color_threshold=True)
 
         title = 'Number of samples per cloud ID for DE algorithm'
         title_y = 'Number of samples'
@@ -228,7 +258,7 @@ def main():
 
         title = 'Iterations per cloud ID for DE algorithm'
         title_y = 'Iterations until convergence'
-        showBarSimple(it_avg_de, title, title_x, title_y, color_gradient=True)
+        showBarSimple(it_avg_de, title, title_x, title_y)
 
         title = 'Position error (m) per cloud ID for DE algorithm'
         title_y = 'Position error in meters'
@@ -236,7 +266,7 @@ def main():
 
         title = 'Orientation error per cloud ID for DE algorithm'
         title_y = 'Orientation error in meters'
-        showBarSimple(orierror_avg_de, title, title_x, title_y, custom_y_limit=MAX_ORI_ERROR, color_gradient=True)
+        showBarSimple(orierror_avg_de, title, title_x, title_y, custom_y_limit=MAX_ORI_ERROR_COMBINED, color_gradient=True)
 
     elif user_selection == 2:
         print("Particle Swarm Optimization selected")
@@ -253,7 +283,13 @@ def main():
 
         orierror_avg_pso = getOriErrorAvg(pso_data)
 
+        conv_perc_pso = getConvPerc(pso_data)
+
         title_x = 'Cloud ID'
+
+        title = f'Convergence percentage per cloud ID for PSO algorithm. ({MAX_POS_ERROR}m, {MAX_ORI_ERROR_1}º, {MAX_ORI_ERROR_2}º, {MAX_ORI_ERROR_3}º)'
+        title_y = 'Convergence percentage'
+        showBarSimple(conv_perc_pso, title, title_x, title_y, custom_y_limit=MIN_CONVERGENCE_PERCENTAGE, color_threshold=True)
 
         title = 'Number of samples per cloud ID for PSO algorithm'
         title_y = 'Number of samples'
@@ -265,7 +301,7 @@ def main():
 
         title = 'Iterations per cloud ID for PSO algorithm'
         title_y = 'Iterations until convergence'
-        showBarSimple(it_avg_pso, title, title_x, title_y, color_gradient=True)
+        showBarSimple(it_avg_pso, title, title_x, title_y)
 
         title = 'Position error (m) per cloud ID for PSO algorithm'
         title_y = 'Position error in meters'
@@ -273,7 +309,7 @@ def main():
 
         title = 'Orientation error per cloud ID for PSO algorithm'
         title_y = 'Orientation error in meters'
-        showBarSimple(orierror_avg_pso, title, title_x, title_y, custom_y_limit=MAX_ORI_ERROR, color_gradient=True)
+        showBarSimple(orierror_avg_pso, title, title_x, title_y, custom_y_limit=MAX_ORI_ERROR_COMBINED, color_gradient=True)
 
     elif user_selection == 3:
         print("Invasive Weed Optimization selected")
@@ -290,7 +326,13 @@ def main():
 
         orierror_avg_iwo = getOriErrorAvg(iwo_data)
 
+        conv_perc_iwo = getConvPerc(iwo_data)
+
         title_x = 'Cloud ID'
+
+        title = f'Convergence percentage per cloud ID for IWO algorithm. ({MAX_POS_ERROR}m, {MAX_ORI_ERROR_1}º, {MAX_ORI_ERROR_2}º, {MAX_ORI_ERROR_3}º)'
+        title_y = 'Convergence percentage'
+        showBarSimple(conv_perc_iwo, title, title_x, title_y, custom_y_limit=MIN_CONVERGENCE_PERCENTAGE, color_threshold=True)
 
         title = 'Number of samples per cloud ID for IWO algorithm'
         title_y = 'Number of samples'
@@ -302,7 +344,7 @@ def main():
 
         title = 'Iterations per cloud ID for IWO algorithm'
         title_y = 'Iterations until convergence'
-        showBarSimple(it_avg_iwo, title, title_x, title_y, color_gradient=True)
+        showBarSimple(it_avg_iwo, title, title_x, title_y)
 
         title = 'Position error (m) per cloud ID for IWO algorithm'
         title_y = 'Position error in meters'
@@ -310,7 +352,7 @@ def main():
 
         title = 'Orientation error per cloud ID for IWO algorithm'
         title_y = 'Orientation error in meters'
-        showBarSimple(orierror_avg_iwo, title, title_x, title_y, custom_y_limit=MAX_ORI_ERROR, color_gradient=True)
+        showBarSimple(orierror_avg_iwo, title, title_x, title_y, custom_y_limit=MAX_ORI_ERROR_COMBINED, color_gradient=True)
 
     elif user_selection == 4:
         print("All Selected")
@@ -339,7 +381,16 @@ def main():
         orierror_avg_pso = getOriErrorAvg(pso_data)
         orierror_avg_iwo = getOriErrorAvg(iwo_data)
 
+        conv_perc_de = getConvPerc(de_data)
+        conv_perc_pso = getConvPerc(pso_data)
+        conv_perc_iwo = getConvPerc(iwo_data)
+
         title_x = 'Cloud ID'
+
+        title = f'Convergence percentage per cloud ID for each algorithm. ({MAX_POS_ERROR}m, {MAX_ORI_ERROR_1}º, {MAX_ORI_ERROR_2}º, {MAX_ORI_ERROR_3}º)'
+        title_y = 'Convergence percentage'
+        combined_conv_perc = pd.DataFrame({'DE': conv_perc_de, 'PSO': conv_perc_pso, 'IWO': conv_perc_iwo})
+        showBarCombined(combined_conv_perc, title, title_x, title_y, custom_y_limit=MIN_CONVERGENCE_PERCENTAGE)
 
         title = 'Number of samples per cloud ID for each algorithm'
         title_y = 'Number of samples'
@@ -364,8 +415,7 @@ def main():
         title = 'Orientation error per cloud ID for each algorithm'
         title_y = 'Orientation error in meters'
         combined_orierror_avg = pd.DataFrame({'DE': orierror_avg_de, 'PSO': orierror_avg_pso, 'IWO': orierror_avg_iwo})
-        showBarCombined(combined_orierror_avg, title, title_x, title_y, custom_y_limit=MAX_ORI_ERROR)
-
+        showBarCombined(combined_orierror_avg, title, title_x, title_y, custom_y_limit=MAX_ORI_ERROR_COMBINED)
 
 if __name__ == '__main__':
     main()
