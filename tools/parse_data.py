@@ -135,7 +135,7 @@ def showBarCombined(dataframe, title, title_x, title_y, max_y_value=None,
 
         # Graficar cada algoritmo con un color diferente
         plt.bar(index, dataframe['DE'], bar_width, label='DE', color='blue')
-        plt.bar(index + bar_width, dataframe['PSO'], bar_width, label='PSO', color='green')
+        plt.bar(index + bar_width, dataframe['PSO'], bar_width, label='PSO', color='limegreen')
         plt.bar(index + 2*bar_width, dataframe['IWO'], bar_width, label='IWO', color='red')
 
         # Configurar etiquetas y título
