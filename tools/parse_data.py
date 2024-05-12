@@ -24,11 +24,11 @@ current_directory = os.path.dirname(__file__)
 parent_directory = os.path.join(current_directory, '..')
 filepath = os.path.join(parent_directory, 'errordata.csv')
 
-MAX_POS_ERROR = 0.75 # In meters
-MAX_ORI_ERROR_1 = 10
-MAX_ORI_ERROR_2 = 10
-MAX_ORI_ERROR_3 = 10
-MAX_ORI_ERROR_COMBINED = 10 # In degrees (mean of three ori errors)
+MAX_POS_ERROR = 0.25 # In meters
+MAX_ORI_ERROR_1 = 8
+MAX_ORI_ERROR_2 = 8
+MAX_ORI_ERROR_3 = 8
+MAX_ORI_ERROR_COMBINED = (MAX_ORI_ERROR_1 + MAX_ORI_ERROR_2 + MAX_ORI_ERROR_3) / 3 # In degrees (mean of three ori errors)
 MIN_CONVERGENCE_PERCENTAGE = 75
 ########################################################################
 
@@ -218,6 +218,8 @@ def showInfo(data_frame, name):
     orierror_avg_df = getOriErrorAvg(data_frame)
 
     conv_perc_df = getConvPerc(data_frame)
+    num_convergences = (conv_perc_df > MIN_CONVERGENCE_PERCENTAGE).sum()
+    print(Color.CYAN + f"{name} Convergences: {num_convergences}/{conv_perc_df.count()}" + Color.END)
 
     title_x = 'Cloud ID'
 
@@ -311,6 +313,13 @@ def main():
         conv_perc_de = getConvPerc(de_data)
         conv_perc_pso = getConvPerc(pso_data)
         conv_perc_iwo = getConvPerc(iwo_data)
+
+        num_convergences_de = (conv_perc_de > MIN_CONVERGENCE_PERCENTAGE).sum()
+        num_convergences_pso = (conv_perc_pso > MIN_CONVERGENCE_PERCENTAGE).sum()
+        num_convergences_iwo = (conv_perc_iwo > MIN_CONVERGENCE_PERCENTAGE).sum()
+        print(Color.CYAN + f"DE Convergences: {num_convergences_de}/{conv_perc_de.count()}" + Color.END)
+        print(Color.CYAN + f"PSO Convergences: {num_convergences_pso}/{conv_perc_pso.count()}" + Color.END)
+        print(Color.CYAN + f"IWO Convergences: {num_convergences_iwo}/{conv_perc_iwo.count()}" + Color.END)
 
         title_x = 'Cloud ID'
 
