@@ -33,11 +33,9 @@ MIN_CONVERGENCE_PERCENTAGE = 75
 ########################################################################
 
 
-
 def getSampleCounts(data_frame):
     sample_counts = data_frame.groupby('id_cloud').size()
     return sample_counts
-
 
 
 def getConvPerc(data_frame):
@@ -56,19 +54,27 @@ def getConvPerc(data_frame):
     return convergence_percentage
 
 
-
-def getPosErrorAvg(data_frame):
+def getOriErrorStd(data_frame):
     ids = data_frame['id_cloud'].tolist()
-    pos_errors = data_frame['poserror'].tolist()
+    orierror_1 = data_frame['orierror_1'].tolist()
+    orierror_2 = data_frame['orierror_2'].tolist()
+    orierror_3 = data_frame['orierror_3'].tolist()
 
-    pares_ordenados = sorted(zip(ids, pos_errors))
+    pares_ordenados_1 = sorted(zip(ids, orierror_1))
+    pares_ordenados_2 = sorted(zip(ids, orierror_2))
+    pares_ordenados_3 = sorted(zip(ids, orierror_3))
 
-    df_pares_ordenados = pd.DataFrame(pares_ordenados, columns=['id_cloud', 'poserror'])
+    df_pares_ordenados_1 = pd.DataFrame(pares_ordenados_1, columns=['id_cloud', 'orierror_1'])
+    df_pares_ordenados_2 = pd.DataFrame(pares_ordenados_2, columns=['id_cloud', 'orierror_2'])
+    df_pares_ordenados_3 = pd.DataFrame(pares_ordenados_3, columns=['id_cloud', 'orierror_3'])
 
-    poserror_avg = df_pares_ordenados.groupby('id_cloud')['poserror'].mean()
+    orierror_std_1 = df_pares_ordenados_1.groupby('id_cloud')['orierror_1'].std()
+    orierror_std_2 = df_pares_ordenados_2.groupby('id_cloud')['orierror_2'].std()
+    orierror_std_3 = df_pares_ordenados_3.groupby('id_cloud')['orierror_3'].std()
 
-    return poserror_avg
+    total_orierror_std = (orierror_std_1 + orierror_std_2 + orierror_std_3) / 3
 
+    return total_orierror_std
 
 
 def getOriErrorAvg(data_frame):
@@ -94,32 +100,38 @@ def getOriErrorAvg(data_frame):
     return total_orierror_avg
 
 
-
-def getItAvg(data_frame):
+def getDataStd(data_frame, col_id):
     ids = data_frame['id_cloud'].tolist()
-    its = data_frame['it'].tolist()
+    column_data = data_frame[col_id].tolist()
 
-    pares_ordenados = sorted(zip(ids, its))
+    pares_ordenados = sorted(zip(ids, column_data))
+    df_pares_ordenados = pd.DataFrame(pares_ordenados, columns=['id_cloud', col_id])
 
-    df_pares_ordenados = pd.DataFrame(pares_ordenados, columns=['id_cloud', 'it'])
+    # Calcular el rango intercuartil (IQR)
+    Q1 = df_pares_ordenados.groupby('id_cloud')[col_id].quantile(0.25)
+    Q3 = df_pares_ordenados.groupby('id_cloud')[col_id].quantile(0.75)
+    IQR = Q3 - Q1
 
-    it_avg = df_pares_ordenados.groupby('id_cloud')['it'].mean()
+    # Calcular el rango medio absoluto de la desviación (MAD)
+    MAD = df_pares_ordenados.groupby('id_cloud')[col_id].apply(lambda x: np.median(np.abs(x - x.median())))
 
-    return it_avg
+    # Calcular la desviación estándar
+    STD = df_pares_ordenados.groupby('id_cloud')[col_id].std()
+
+    return STD
 
 
-
-def getTimeAvg(data_frame):
+def getDataAvg(data_frame, col_id):
     ids = data_frame['id_cloud'].tolist()
-    times = data_frame['time'].tolist()
+    column_data = data_frame[col_id].tolist()
 
-    pares_ordenados = sorted(zip(ids, times))
+    pares_ordenados = sorted(zip(ids, column_data))
 
-    df_pares_ordenados = pd.DataFrame(pares_ordenados, columns=['id_cloud', 'time'])
+    df_pares_ordenados = pd.DataFrame(pares_ordenados, columns=['id_cloud', col_id])
 
-    time_avg = df_pares_ordenados.groupby('id_cloud')['time'].mean()
+    data_avg = df_pares_ordenados.groupby('id_cloud')[col_id].mean()
 
-    return time_avg
+    return data_avg
 
 
 
@@ -156,6 +168,37 @@ def showBarCombined(dataframe, title, title_x, title_y, max_y_value=None,
         plt.show()
 
 
+def showErrorBarSimple(dataframe_avg, stds, title, title_x, title_y, max_y_value=None, custom_y_limit=None, color_gradient=False, color_threshold=False):
+
+    # Graficar los datos con error bars
+    plt.figure(figsize=(14, 6))
+
+    # Obtener los datos para graficar
+    ids = dataframe_avg.index
+    y_data = dataframe_avg.values
+    x_positions = np.arange(len(ids))
+
+    # Trazar la gráfica con error bars
+    plt.errorbar(ids, y_data, yerr=stds, fmt='o', capsize=5)
+
+    # Configurar etiquetas y título
+    plt.xlabel(title_x)
+    plt.ylabel(title_y)
+    plt.title(title)
+    plt.xticks(x_positions + 1, ids)
+
+    # Agregar línea discontinua si se especifica
+    if custom_y_limit:
+        plt.axhline(y=custom_y_limit, color='gray', linestyle='--')
+
+    # Establecer límite en el eje y si se especifica
+    if max_y_value:
+        plt.ylim(0, max_y_value)
+
+    # Mostrar la gráfica
+    plt.tight_layout()
+    plt.show()
+
 
 def showBarSimple(dataframe, title, title_x, title_y, max_y_value=None, custom_y_limit=None, color_gradient=False, color_threshold=False):
 
@@ -165,7 +208,6 @@ def showBarSimple(dataframe, title, title_x, title_y, max_y_value=None, custom_y
     # Obtener los datos para graficar
     ids = dataframe.index
     y_data = dataframe.values
-    bar_width = 0.2
     index = np.arange(len(ids))
 
     if color_gradient:
@@ -189,7 +231,7 @@ def showBarSimple(dataframe, title, title_x, title_y, max_y_value=None, custom_y
     plt.xlabel(title_x)
     plt.ylabel(title_y)
     plt.title(title)
-    plt.xticks(index + bar_width, ids)
+    plt.xticks(index, ids)
     
     # Agregar línea discontinua si se especifica
     if custom_y_limit:
@@ -209,13 +251,17 @@ def showInfo(data_frame, name):
     num_samples_df = getSampleCounts(data_frame)
 
     # Calcula las medias para cada algoritmo
-    time_avg_df = getTimeAvg(data_frame)
+    time_avg_df = getDataAvg(data_frame, 'time')
+    time_std_df = getDataStd(data_frame, 'time')
 
-    it_avg_df = getItAvg(data_frame)
+    it_avg_df = getDataAvg(data_frame, 'it')
+    it_std_df = getDataStd(data_frame, 'it')
 
-    poserror_avg_df = getPosErrorAvg(data_frame)
+    poserror_avg_df = getDataAvg(data_frame, 'poserror')
+    poserror_std_df = getDataStd(data_frame, 'poserror')
 
     orierror_avg_df = getOriErrorAvg(data_frame)
+    orierror_std_df = getOriErrorStd(data_frame)
 
     conv_perc_df = getConvPerc(data_frame)
     num_convergences = (conv_perc_df > MIN_CONVERGENCE_PERCENTAGE).sum()
@@ -233,19 +279,19 @@ def showInfo(data_frame, name):
 
     title = f'Execution time per cloud ID for {name} algorithm'
     title_y = 'Execution time (seconds)'
-    showBarSimple(time_avg_df, title, title_x, title_y, color_gradient=True)
+    showErrorBarSimple(time_avg_df, time_std_df, title, title_x, title_y, color_gradient=True)
 
     title = f'Iterations per cloud ID for {name} algorithm'
     title_y = 'Iterations until convergence'
-    showBarSimple(it_avg_df, title, title_x, title_y)
+    showErrorBarSimple(it_avg_df, it_std_df, title, title_x, title_y)
 
     title = f'Position error (m) per cloud ID for {name} algorithm'
     title_y = 'Position error in meters'
-    showBarSimple(poserror_avg_df, title, title_x, title_y, custom_y_limit=MAX_POS_ERROR, color_gradient=True)
+    showErrorBarSimple(poserror_avg_df, poserror_std_df, title, title_x, title_y, custom_y_limit=MAX_POS_ERROR, color_gradient=True)
 
     title = f'Orientation error per cloud ID for {name} algorithm'
     title_y = 'Orientation error in meters'
-    showBarSimple(orierror_avg_df, title, title_x, title_y, custom_y_limit=MAX_ORI_ERROR_COMBINED, color_gradient=True)
+    showErrorBarSimple(orierror_avg_df, orierror_std_df, title, title_x, title_y, custom_y_limit=MAX_ORI_ERROR_COMBINED, color_gradient=True)
 
 
 def main():
