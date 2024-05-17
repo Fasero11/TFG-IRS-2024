@@ -340,17 +340,17 @@ def main():
         num_samples_iwo = getSampleCounts(iwo_data)
 
         # Calcula las medias para cada algoritmo
-        time_avg_de = getTimeAvg(de_data)
-        time_avg_pso = getTimeAvg(pso_data)
-        time_avg_iwo = getTimeAvg(iwo_data)
+        time_avg_de = getDataAvg(de_data, 'time')
+        time_avg_pso = getDataAvg(pso_data, 'time')
+        time_avg_iwo = getDataAvg(iwo_data, 'time')
 
-        it_avg_de = getItAvg(de_data)
-        it_avg_pso = getItAvg(pso_data)
-        it_avg_iwo = getItAvg(iwo_data)
+        it_avg_de = getDataAvg(de_data, 'it')
+        it_avg_pso = getDataAvg(pso_data, 'it')
+        it_avg_iwo = getDataAvg(iwo_data, 'it')
 
-        poserror_avg_de = getPosErrorAvg(de_data)
-        poserror_avg_pso = getPosErrorAvg(pso_data)
-        poserror_avg_iwo = getPosErrorAvg(iwo_data)
+        poserror_avg_de = getDataAvg(de_data, 'poserror')
+        poserror_avg_pso = getDataAvg(pso_data, 'poserror')
+        poserror_avg_iwo = getDataAvg(iwo_data, 'poserror')
 
         orierror_avg_de = getOriErrorAvg(de_data)
         orierror_avg_pso = getOriErrorAvg(pso_data)
