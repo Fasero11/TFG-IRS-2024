@@ -319,6 +319,6 @@ def iwo_6dof(scanCloud, mapCloud, mapmax, mapmin, err_dis, NPini, D , Smin, Smax
     pcAligned = o3d.geometry.PointCloud()
     pcAligned.points = o3d.utility.Vector3dVector(spatial_rotation(scanCloud.points, BestWeed))
 
-    return(pcAligned, BestWeed, bestCost, rmse_array, it)
+    return(pcAligned, BestWeed, bestCost, rmse_array, it, stringcondition)
 
 ######################################################################

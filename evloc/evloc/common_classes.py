@@ -26,7 +26,7 @@ class Solution:
     map_global: Global map
     real_scan: Local map
     """
-    def __init__(self, it, timediff, estimate, pos_error, ori_error, map_global, real_scan):
+    def __init__(self, it, timediff, estimate, pos_error, ori_error, map_global, real_scan, stop_condition):
         self.it = it
         self.time = timediff
         self.pose_estimate = estimate
@@ -34,6 +34,7 @@ class Solution:
         self.ori_error = ori_error
         self.map = map_global
         self.loc_scan = self.get_loc_scan(real_scan, estimate)
+        self.stop_condition = stop_condition
 
     def get_loc_scan(self, real_scan, estimate):
         new_points = spatial_rotation(real_scan, estimate)

@@ -39,7 +39,7 @@ def generate_point_cloud(auto=False,
 
     # Variables introduced via keyboard # (Only if not in auto mode)
     if (auto):
-        print("\n" + Color.DARKCYAN + f"Auto mode enabled. {id_cloud}/{len(os.listdir(LOCAL_CLOUDS_FOLDER))}" + Color.END)
+        print("\n" + Color.DARKCYAN + f"Auto mode enabled. Cloud {id_cloud}/{len(os.listdir(LOCAL_CLOUDS_FOLDER))}" + Color.END)
 
     print(Color.BOLD + "\nFINAL ALGORITHM PARAMETERS: " + Color.END)
 
@@ -90,6 +90,6 @@ def generate_point_cloud(auto=False,
     ]
 
     save_error_data(id_cloud, algorithm_type, user_NPini, user_iter_max, D, F, CR, solution.time, solution.it, poserror, orierror, w, wdamp, c1, c2,
-                    Smin, Smax, exponent, sigma_initial, sigma_final)
+                    Smin, Smax, exponent, sigma_initial, sigma_final, solution.stop_condition)
 
     return sol_points

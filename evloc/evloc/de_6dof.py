@@ -49,7 +49,7 @@ def de_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D,iter_max,F,CR,versi
     nVar = D            # Number of Decision Variables
     VarSize = [1, nVar]   # Size of Decision Variables Matrix
     minIt = 50  # Minimum number of iterations
-
+    stringcondition = "Max iterations reached"
     # DE Parameters
     # F - Mutation
     # CR - Crossover rate
@@ -339,4 +339,4 @@ def de_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D,iter_max,F,CR,versi
     pcAligned = o3d.geometry.PointCloud()
     pcAligned.points = o3d.utility.Vector3dVector(spatial_rotation(scanCloud.points, BestMember))
 
-    return(pcAligned, BestMember, bestCost, rmse_array, it)
+    return(pcAligned, BestMember, bestCost, rmse_array, it, stringcondition)

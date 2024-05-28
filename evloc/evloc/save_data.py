@@ -4,7 +4,7 @@ import os
 
 
 def save_error_data(id_cloud, algorithm_type, user_NPini, user_iter_max, D, F, CR, time, it, poserror, orierror, w, wdamp, c1, c2,
-                    Smin, Smax, exponent, sigma_initial, sigma_final):
+                    Smin, Smax, exponent, sigma_initial, sigma_final, stop_condition):
     """
     Saves the solution in the $HOME directory as a .csv file
     """
@@ -19,7 +19,7 @@ def save_error_data(id_cloud, algorithm_type, user_NPini, user_iter_max, D, F, C
         with open(filepath, mode='w', newline='') as archivo_csv:
             escritor_csv = csv.writer(archivo_csv)
             escritor_csv.writerow(['id_cloud', 'algorithm', 'NPini', 'iter_max', 'D', 'F', 'CR', 'w', 'wdamp',
-                                    'c1', 'c2', 'Smin', 'Smax', 'exponent', 'sigma_initial', 'sigma_final', 'time', 'it', 'poserror', 'orierror_1', 'orierror_2', 'orierror_2'])
+                                    'c1', 'c2', 'Smin', 'Smax', 'exponent', 'sigma_initial', 'sigma_final', 'time', 'it', 'stop_condition', 'poserror', 'orierror_1', 'orierror_2', 'orierror_2'])
 
 
     # Escribir los datos en el archivo CSV
@@ -27,13 +27,13 @@ def save_error_data(id_cloud, algorithm_type, user_NPini, user_iter_max, D, F, C
         escritor_csv = csv.writer(archivo_csv)
         if algorithm_type == 1:
             escritor_csv.writerow([id_cloud] + [algorithm_type] + [user_NPini] + [user_iter_max] + [D] + [F] + [CR] + [None] + [None] + [None] + [None]
-                                  + [None] + [None] + [None] + [None] + [None]  + [time] + [it] + [poserror] + orierror)
+                                  + [None] + [None] + [None] + [None] + [None]  + [time] + [it] + [stop_condition] + [poserror] + orierror)
         if algorithm_type == 2:
             escritor_csv.writerow([id_cloud] + [algorithm_type] + [user_NPini] + [user_iter_max] + [D] + [None] + [None] + [w] + [wdamp] + [c1] + [c2]
-                                  + [None] + [None] + [None] + [None] + [None] + [time] + [it] + [poserror] + orierror)
+                                  + [None] + [None] + [None] + [None] + [None] + [time] + [it] + [stop_condition] + [poserror] + orierror)
         if algorithm_type == 3:
             escritor_csv.writerow([id_cloud] + [algorithm_type] + [user_NPini] + [user_iter_max] + [D] + [None] + [None] + [None] + [None] + [None] + [None] 
-                                  + [Smin] + [Smax] + [exponent] + [sigma_initial] + [sigma_final] + [time] + [it] + [poserror] + orierror)
+                                  + [Smin] + [Smax] + [exponent] + [sigma_initial] + [sigma_final] + [time] + [it] + [stop_condition] + [poserror] + orierror)
 
 
     print("\n"+Color.BOLD + "SUMMARY:" + Color.END)
@@ -51,6 +51,7 @@ def save_error_data(id_cloud, algorithm_type, user_NPini, user_iter_max, D, F, C
     print(f"sigma_final: {sigma_final}")
     print(f"time: {time}s")
     print(f"it: {it}")
+    print(f"stop_condition: {stop_condition}")
     print(f"poserror: {poserror}")
     print(f"orierror: {orierror}\n")
 

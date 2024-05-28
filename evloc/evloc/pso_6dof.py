@@ -387,4 +387,4 @@ def pso_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D, w, wdamp, c1, c2,
     pcAligned = o3d.geometry.PointCloud()
     pcAligned.points = o3d.utility.Vector3dVector(spatial_rotation(scanCloud.points, BestParticle))
 
-    return(pcAligned, BestParticle, bestCost, rmse_array, it)
+    return(pcAligned, BestParticle, bestCost, rmse_array, it, stringcondition)
