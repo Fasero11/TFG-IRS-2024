@@ -35,6 +35,7 @@ def iwo_6dof(scanCloud, mapCloud, mapmax, mapmin, err_dis, NPini, D , Smin, Smax
     nVar = D  # Number of Decision Variables
     VarSize = [1, nVar]  # Decision Variables Matrix Size
     minIt = 50
+    stringcondition = "Max iterations reached"
 
     # IWO Parameters
 
