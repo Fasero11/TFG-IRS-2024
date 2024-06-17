@@ -6,24 +6,28 @@ from evloc.common_functions import distance_pc_to_point
 from evloc.common_functions import spatial_rotation
 from evloc.common_classes import Color
 
+
 class Particle:
     """
     Part of the PSO algortihm
     """
-    def __init__(self):
-        self.Position = np.array([])
-        self.Cost = None
-        self.Count = None
-        self.Velocity = np.array([])
-        self.Best = BestParticle_()
+    def __init__(self, n_dims):
+        self.velocity = np.zeros(n_dims)
+        self.position = np.random.uniform(-1, 1, n_dims)
+        self.best_position = np.copy(self.position)
+        self.cost = float('inf')
+        self.best_cost = float('inf')
 
-class BestParticle_:
+
+class Swarm:
     """
     Part of the PSO algortihm
     """
-    def __init__(self):
-        self.Position = np.array([])
-        self.Cost = None
+    def __init__(self, n_particles, n_dims):
+        self.particles = [Particle(n_dims) for _ in range(n_particles)]
+        self.global_best_position = np.zeros(n_dims)
+        self.global_best_cost = float('inf')
+
 
 def pso_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D, w, wdamp, c1, c2, iter_max, version_fitness):
     ##  Boundaries
@@ -44,12 +48,13 @@ def pso_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D, w, wdamp, c1, c2,
 
     nVar = D            # Number of Decision Variables
     VarSize = [1, nVar]   # Size of Decision Variables Matrix
+    stringcondition = "Max iterations reached"
 
     # PSO Parameters
     nPop = NPini
     minIt = 50  # Minimum number of iterations
 
-    # Velocity Limits. Definen cuanto se puede desplazar cada particula entre
+    # velocity Limits. Definen cuanto se puede desplazar cada particula entre
     # iteraciones (en este caso un porcentaje 10% de la medida de cada dimension)
 
     VelMax_x = 0.1 * (higherBoundX - lowerBoundX)
@@ -73,25 +78,23 @@ def pso_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D, w, wdamp, c1, c2,
     # Initialization
 
     # Initialize Population
-    particle = [Particle() for _ in range(nPop)]  # Crear nPop instancias de Particle
-    GlobalBest = BestParticle_()
-    GlobalBest.Cost = float('inf')  # Inicializamos el coste a infinito
-    GlobalBest.Count = float('inf')  # Inicializamos el contador a infinito
+    swarm = Swarm(nPop, nVar)
 
     rndParticle = np.zeros(6)
     count = 0
 
-    bestParticleCost = 100000000
-    worstParticleCost = 100000
-    count_bestfix = 0  # contadores a 0 para la convergencia del algoritmo
+    bestParticlecost = float('inf')
+    worstParticlecost = float('inf')
+    count_bestfix = 0
     count_worsefix = 0
     count_avgfix = 0
-    ind_reparto_error = 100000
+    ind_reparto_error = float('inf')
+    particles = swarm.particles
 
-    # Initialize Position
+    # Initialize position
     for current_iteration in range(nPop):
         if current_iteration == 0:  # first population is zero
-            particle[current_iteration].Position = np.zeros(6)
+            particles[current_iteration].position = np.zeros(6)
         else:
             for n in range(nVar):
                 if n == 0:  # Translation
@@ -107,14 +110,14 @@ def pso_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D, w, wdamp, c1, c2,
                 elif n == 5:
                     rndParticle[n] = np.random.uniform(lowerAngle_rz, higherAngle_rz)
 
-            particle[current_iteration].Position = rndParticle.copy()
+            particles[current_iteration].position = rndParticle.copy()
 
-        # Initialize Velocity to zero
-        particle[current_iteration].Velocity = np.zeros(VarSize)[0]
+        # Initialize velocity to zero
+        particles[current_iteration].velocity = np.zeros(VarSize)[0]
 
         # Evaluation poblacion inicial
         cand_scan = o3d.geometry.PointCloud()
-        cand_scan.points = o3d.utility.Vector3dVector(spatial_rotation(scanCloud.points, particle[current_iteration].Position))
+        cand_scan.points = o3d.utility.Vector3dVector(spatial_rotation(scanCloud.points, particles[current_iteration].position))
 
         # Cortamos el mapa global a los limites de la nube local, para comparar con menos puntos(Puede salir nube vacía,
         # en tal caso crear nube de ceros)
@@ -154,22 +157,24 @@ def pso_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D, w, wdamp, c1, c2,
             correspondence_mat[j, :] = points_array[Idx[0, j], :]
 
         # Calcular distancias euclídeas de cada punto del mapa y del scan al punto candidato
-        dist_NNmap = distance_pc_to_point(correspondence_mat, particle[current_iteration].Position)
-        dist_scancand = distance_pc_to_point(cand_scan.points, particle[current_iteration].Position)
+        dist_NNmap = distance_pc_to_point(correspondence_mat, particles[current_iteration].position)
+        dist_scancand = distance_pc_to_point(cand_scan.points, particles[current_iteration].position)
 
         # Evaluar y asignar el error de las medidas (distancia euclídea o absoluta)
-        particle[current_iteration].Cost = costfunction3d(dist_scancand, dist_NNmap, version_fitness, err_dis)
+        particles[current_iteration].cost = costfunction3d(dist_scancand, dist_NNmap, version_fitness, err_dis)
 
         # Update Personal Best
-        particle[current_iteration].Best.Position = particle[current_iteration].Position
-        particle[current_iteration].Best.Cost = particle[current_iteration].Cost
+        if particles[current_iteration].cost < particles[current_iteration].best_cost:
+            particles[current_iteration].best_position = particles[current_iteration].position
+            particles[current_iteration].best_cost = particles[current_iteration].cost
 
         # Update Global Best
-        if particle[current_iteration].Best.Cost < GlobalBest.Cost:
-            GlobalBest = particle[current_iteration].Best
+        if particles[current_iteration].best_cost < swarm.global_best_cost:
+            swarm.global_best_cost = particles[current_iteration].best_cost
+            swarm.global_best_position = particles[current_iteration].best_position
 
         # Matriz para almacenar el mejor coste de cada iteración
-        BestCosts = np.zeros(iter_max)
+        Bestcosts = np.zeros(iter_max)
 
 
     #.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#.#
@@ -184,64 +189,64 @@ def pso_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D, w, wdamp, c1, c2,
             # posición histórica de ella misma. Los coeficientes w, c1 y c2 son parámetros que cuantifican la importancia
             # que se le da a cada parte. np.random.rand() genera un valor entre 0-1 (para cada parámetro) que introduce una componente aleatoria.
 
-            particle[pop_id].Velocity = w * particle[pop_id].Velocity \
-                + c1 * np.random.rand(*VarSize) * (particle[pop_id].Best.Position - particle[pop_id].Position) \
-                + c2 * np.random.rand(*VarSize) * (GlobalBest.Position - particle[pop_id].Position)
+            particles[pop_id].velocity = w * particles[pop_id].velocity \
+                + c1 * np.random.rand(*VarSize) * (particles[pop_id].best_position- particles[pop_id].position) \
+                + c2 * np.random.rand(*VarSize) * (swarm.global_best_position - particles[pop_id].position)
 
 
-            particle[pop_id].Velocity = particle[pop_id].Velocity[0]
+            particles[pop_id].velocity = particles[pop_id].velocity[0]
 
-            # Apply Velocity Limits
+            # Apply velocity Limits
 
-            particle[pop_id].Velocity[0] = max(particle[pop_id].Velocity[0], VelMin_x)
-            particle[pop_id].Velocity[0] = min(particle[pop_id].Velocity[0], VelMax_x)
+            particles[pop_id].velocity[0] = max(particles[pop_id].velocity[0], VelMin_x)
+            particles[pop_id].velocity[0] = min(particles[pop_id].velocity[0], VelMax_x)
 
-            particle[pop_id].Velocity[1] = max(particle[pop_id].Velocity[1], VelMin_y)
-            particle[pop_id].Velocity[1] = min(particle[pop_id].Velocity[1], VelMax_y)
+            particles[pop_id].velocity[1] = max(particles[pop_id].velocity[1], VelMin_y)
+            particles[pop_id].velocity[1] = min(particles[pop_id].velocity[1], VelMax_y)
 
-            particle[pop_id].Velocity[2] = max(particle[pop_id].Velocity[2], VelMin_z)
-            particle[pop_id].Velocity[2] = min(particle[pop_id].Velocity[2], VelMax_z)
+            particles[pop_id].velocity[2] = max(particles[pop_id].velocity[2], VelMin_z)
+            particles[pop_id].velocity[2] = min(particles[pop_id].velocity[2], VelMax_z)
 
-            particle[pop_id].Velocity[3] = max(particle[pop_id].Velocity[3], VelMin_Rx)
-            particle[pop_id].Velocity[3] = min(particle[pop_id].Velocity[3], VelMax_Rx)
+            particles[pop_id].velocity[3] = max(particles[pop_id].velocity[3], VelMin_Rx)
+            particles[pop_id].velocity[3] = min(particles[pop_id].velocity[3], VelMax_Rx)
 
-            particle[pop_id].Velocity[4] = max(particle[pop_id].Velocity[4], VelMin_Ry)
-            particle[pop_id].Velocity[4] = min(particle[pop_id].Velocity[4], VelMax_Ry)
+            particles[pop_id].velocity[4] = max(particles[pop_id].velocity[4], VelMin_Ry)
+            particles[pop_id].velocity[4] = min(particles[pop_id].velocity[4], VelMax_Ry)
 
-            particle[pop_id].Velocity[5] = max(particle[pop_id].Velocity[5], VelMin_Rz)
-            particle[pop_id].Velocity[5] = min(particle[pop_id].Velocity[5], VelMax_Rz)
+            particles[pop_id].velocity[5] = max(particles[pop_id].velocity[5], VelMin_Rz)
+            particles[pop_id].velocity[5] = min(particles[pop_id].velocity[5], VelMax_Rz)
 
-            # Update Position
-            particle[pop_id].Position = np.array(particle[pop_id].Position) + np.array(particle[pop_id].Velocity)
+            # Update position
+            particles[pop_id].position = np.array(particles[pop_id].position) + np.array(particles[pop_id].velocity)
 
-            # Velocity Mirror Effect
+            # velocity Mirror Effect
             IsOutside = (
-                (particle[pop_id].Position[0] < lowerBoundX) | (particle[pop_id].Position[0] > higherBoundX) |
-                (particle[pop_id].Position[1] < lowerBoundY) | (particle[pop_id].Position[1] > higherBoundY) |
-                (particle[pop_id].Position[2] < lowerBoundZ) | (particle[pop_id].Position[2] > higherBoundZ) |
-                (particle[pop_id].Position[3] < lowerAngle_rx) | (particle[pop_id].Position[3] > higherAngle_rx) |
-                (particle[pop_id].Position[4] < lowerAngle_ry) | (particle[pop_id].Position[4] > higherAngle_ry) |
-                (particle[pop_id].Position[5] < lowerAngle_rz) | (particle[pop_id].Position[5] > higherAngle_rz)
+                (particles[pop_id].position[0] < lowerBoundX) | (particles[pop_id].position[0] > higherBoundX) |
+                (particles[pop_id].position[1] < lowerBoundY) | (particles[pop_id].position[1] > higherBoundY) |
+                (particles[pop_id].position[2] < lowerBoundZ) | (particles[pop_id].position[2] > higherBoundZ) |
+                (particles[pop_id].position[3] < lowerAngle_rx) | (particles[pop_id].position[3] > higherAngle_rx) |
+                (particles[pop_id].position[4] < lowerAngle_ry) | (particles[pop_id].position[4] > higherAngle_ry) |
+                (particles[pop_id].position[5] < lowerAngle_rz) | (particles[pop_id].position[5] > higherAngle_rz)
             )
 
-            # Update Velocity based on IsOutside
+            # Update velocity based on IsOutside
             if IsOutside:
                 for j in range(6):
-                    particle[pop_id].Velocity[j] = -particle[pop_id].Velocity[j]
+                    particles[pop_id].velocity[j] = -particles[pop_id].velocity[j]
 
 
-            # Apply Position Limits
-            particle[pop_id].Position[0] = max(min(particle[pop_id].Position[0], higherBoundX), lowerBoundX)
-            particle[pop_id].Position[1] = max(min(particle[pop_id].Position[1], higherBoundY), lowerBoundY)
-            particle[pop_id].Position[2] = max(min(particle[pop_id].Position[2], higherBoundZ), lowerBoundZ)
-            particle[pop_id].Position[3] = max(min(particle[pop_id].Position[3], higherAngle_rx), lowerAngle_rx)
-            particle[pop_id].Position[4] = max(min(particle[pop_id].Position[4], higherAngle_ry), lowerAngle_ry)
-            particle[pop_id].Position[5] = max(min(particle[pop_id].Position[5], higherAngle_rz), lowerAngle_rz)
+            # Apply position Limits
+            particles[pop_id].position[0] = max(min(particles[pop_id].position[0], higherBoundX), lowerBoundX)
+            particles[pop_id].position[1] = max(min(particles[pop_id].position[1], higherBoundY), lowerBoundY)
+            particles[pop_id].position[2] = max(min(particles[pop_id].position[2], higherBoundZ), lowerBoundZ)
+            particles[pop_id].position[3] = max(min(particles[pop_id].position[3], higherAngle_rx), lowerAngle_rx)
+            particles[pop_id].position[4] = max(min(particles[pop_id].position[4], higherAngle_ry), lowerAngle_ry)
+            particles[pop_id].position[5] = max(min(particles[pop_id].position[5], higherAngle_rz), lowerAngle_rz)
 
 
             # Evaluación nuevamente
             cand_scan = o3d.geometry.PointCloud()
-            cand_scan.points = o3d.utility.Vector3dVector(spatial_rotation(scanCloud.points, particle[pop_id].Position))
+            cand_scan.points = o3d.utility.Vector3dVector(spatial_rotation(scanCloud.points, particles[pop_id].position))
 
             # Cortamos el mapa a los límites de la nube (puede salir nube vacía, poner a 000)
             aabb = cand_scan.get_axis_aligned_bounding_box()
@@ -279,74 +284,75 @@ def pso_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D, w, wdamp, c1, c2,
                 correspondence_mat[j, :] = points_array[Idx[0, j], :]
 
             # Calcular distancias euclídeas de cada punto del mapa y del scan al punto candidato
-            dist_NNmap = distance_pc_to_point(correspondence_mat, particle[pop_id].Position)
-            dist_scancand = distance_pc_to_point(cand_scan.points, particle[pop_id].Position)
+            dist_NNmap = distance_pc_to_point(correspondence_mat, particles[pop_id].position)
+            dist_scancand = distance_pc_to_point(cand_scan.points, particles[pop_id].position)
 
             #print(f"dist_NNmap: {dist_NNmap}  |  dist_scancand: {dist_scancand}")
 
-            particle[pop_id].Cost = costfunction3d(dist_scancand, dist_NNmap, version_fitness, err_dis)
+            particles[pop_id].cost = costfunction3d(dist_scancand, dist_NNmap, version_fitness, err_dis)
 
             # Update Personal Best
-            if particle[pop_id].Cost < particle[pop_id].Best.Cost:
-                particle[pop_id].Best.Position = particle[pop_id].Position
-                particle[pop_id].Best.Cost = particle[pop_id].Cost
+            if particles[pop_id].cost < particles[pop_id].best_cost:
+                particles[pop_id].best_position = particles[pop_id].position
+                particles[pop_id].best_cost = particles[pop_id].cost
 
             # Update Global Best
-            if particle[pop_id].Best.Cost < GlobalBest.Cost:
-                GlobalBest = particle[pop_id].Best
+            if particles[pop_id].best_cost < swarm.global_best_cost:
+                swarm.global_best_cost = particles[pop_id].best_cost
+                swarm.global_best_position = particles[pop_id].best_position
 
-            #print(f"It: {it} | particle[{pop_id}].Cost: " + str(particle[pop_id].Cost) + " GlobalBest.Cost: " + str(GlobalBest.Cost))
+            #print(f"It: {it} | particle[{pop_id}].cost: " + str(particle[pop_id].cost) + " GlobalBest.cost: " + str(GlobalBest.cost))
 
 
-        BestCosts[it] = GlobalBest.Cost
+        Bestcosts[it] = swarm.global_best_cost
         # Reducir la inercia
         w *= wdamp
 
         # Analizar la población
-        sumcosts = 0  # Costo promedio
+        sumcosts = 0  # costo promedio
         for j in range(nPop):
-            sumcosts += particle[j].Cost
+            sumcosts += particles[j].cost
 
         id = 0
         worst = 0
         worst_id = 0
-        for p in particle:
-            if p.Cost > worst:
-                worst = p.Cost
+        for p in particles:
+            if p.cost > worst:
+                worst = p.cost
                 worst_id = id
             id += 1
 
-        bestParticleCostnow = min(p.Cost for p in particle)
-        worstParticleCostnow = max(p.Cost for p in particle)
+        bestParticlecostnow = min(p.cost for p in particles)
+        worstParticlecostnow = max(p.cost for p in particles)
 
         # Display evolution each 10 iterations
         if count == 10:
-            print(f"\nIt: {it}, {Color.GREEN}Best: {round(GlobalBest.Cost, 4)}{Color.END}, {Color.RED}Worse: {round(worstParticleCost,4)}{Color.END}, {Color.YELLOW}Average: {round(sumcosts/nPop,4)}{Color.END}, Best/measure: {round(bestParticleCost/nPop,4)}, Worse/best: {round(worstParticleCost/bestParticleCost,4)}, Avg/best: {round(sumcosts/nPop/bestParticleCost,4)} \n Position (x, y, z, alpha, beta, theta): [{round(GlobalBest.Position[0],4)}, {round(GlobalBest.Position[1],4)}, {round(GlobalBest.Position[2],4)}, {round(GlobalBest.Position[3],4)}, {round(GlobalBest.Position[4],4)}, {round(GlobalBest.Position[5],4)}]\n")
+            print(f"\nIt: {it}, {Color.GREEN}Best: {round(swarm.global_best_cost, 4)}{Color.END}, {Color.RED}Worse: {round(worstParticlecost,4)}{Color.END}, {Color.YELLOW}Average: {round(sumcosts/nPop,4)}{Color.END}, Best/measure: {round(bestParticlecost/nPop,4)}, Worse/best: {round(worstParticlecost/bestParticlecost,4)}, Avg/best: {round(sumcosts/nPop/bestParticlecost,4)} \n position (x, y, z, alpha, beta, theta): [{round(swarm.global_best_position[0],4)}, {round(swarm.global_best_position[1],4)}, {round(swarm.global_best_position[2],4)}, {round(swarm.global_best_position[3],4)}, {round(swarm.global_best_position[4],4)}, {round(swarm.global_best_position[5],4)}]\n")
             count=0
         count=count+1
         end_time = time.time()
 
         # Convergence Indicators
-        if bestParticleCostnow < bestParticleCost:  # ¿Mejora el mejor respecto a la iteración anterior?
+        if bestParticlecostnow < bestParticlecost:  # ¿Mejora el mejor respecto a la iteración anterior?
             count_worsefix = 0
             count_avgfix = 0
             count_bestfix = 0  # Sí, reiniciar contador a 0
         else:
             count_bestfix += 1  # No, incrementar contador de veces que no mejora
 
-        bestParticleCost = bestParticleCostnow
+        bestParticlecost = bestParticlecostnow
 
 
-        if worstParticleCost > worstParticleCostnow:  # ¿Mejora el peor candidato?
+        if worstParticlecost > worstParticlecostnow:  # ¿Mejora el peor candidato?
             count_worsefix = 0
             count_avgfix = 0
             count_bestfix = 0  # Sí, reiniciar contador a 0
         else:
             count_worsefix += 1  # No, incrementar contador de veces que no mejora
 
-        worstParticleCost = worstParticleCostnow
+        worstParticlecost = worstParticlecostnow
 
-        ind_reparto_error_aux = sumcosts / (nPop * bestParticleCost)
+        ind_reparto_error_aux = sumcosts / (nPop * bestParticlecost)
 
         if ind_reparto_error_aux < ind_reparto_error:  # ¿Mejora la media?
             count_avgfix = 0
@@ -357,15 +363,15 @@ def pso_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D, w, wdamp, c1, c2,
 
         ind_reparto_error = ind_reparto_error_aux
 
-        #print(f"It: {it}, Time: {round(end_time-start_time,2)}  |||  count_bestfix: {count_bestfix}, count_worsefix: {count_worsefix}, count_avgfix: {count_avgfix}  |||  worstParticleCost: {worstParticleCost} | bestParticleCost: {bestParticleCost} | ind_reparto_error: {ind_reparto_error}")
+        #print(f"It: {it}, Time: {round(end_time-start_time,2)}  |||  count_bestfix: {count_bestfix}, count_worsefix: {count_worsefix}, count_avgfix: {count_avgfix}  |||  worstParticlecost: {worstParticlecost} | bestParticlecost: {bestParticlecost} | ind_reparto_error: {ind_reparto_error}")
 
-        if (all([p.Cost for p in particle]) == GlobalBest.Cost) or \
+        if (all([p.cost for p in particles]) == swarm.global_best_cost) or \
         ((count_bestfix > 10 and count_worsefix > 10 and count_avgfix > 10) and it >= minIt) or \
-        ((worstParticleCost / bestParticleCost < 1.15 and ind_reparto_error < 1.15) and it >= minIt):
+        ((worstParticlecost / bestParticlecost < 1.15 and ind_reparto_error < 1.15) and it >= minIt):
 
-            if all([p.Cost for p in particle]) == GlobalBest.Cost:
+            if all([p.cost for p in particles]) == swarm.global_best_cost:
                 stringcondition = 'total convergence'
-            elif worstParticleCost / bestParticleCost < 1.15 and ind_reparto_error < 1.15:
+            elif worstParticlecost / bestParticlecost < 1.15 and ind_reparto_error < 1.15:
                 stringcondition = 'normal convergence'
             elif count_bestfix > 10 and count_worsefix > 10 and count_avgfix > 10:
                 stringcondition = 'invariant convergence'
@@ -378,13 +384,11 @@ def pso_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D, w, wdamp, c1, c2,
     ########################################################
     ########################################################
     
-    BestSol = GlobalBest
-
-    BestParticle = BestSol.Position
-    bestCost = BestSol.Cost
-    rmse_array =  BestCosts
+    BestParticle = swarm.global_best_position
+    bestcost = swarm.global_best_cost
+    rmse_array =  Bestcosts
 
     pcAligned = o3d.geometry.PointCloud()
     pcAligned.points = o3d.utility.Vector3dVector(spatial_rotation(scanCloud.points, BestParticle))
 
-    return(pcAligned, BestParticle, bestCost, rmse_array, it, stringcondition)
+    return(pcAligned, BestParticle, bestcost, rmse_array, it, stringcondition)
