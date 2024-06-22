@@ -84,9 +84,9 @@ def gl_6dof(map_global, scancloud, groundtruth, algorithm, version_fitness, err_
         f'[{round(estimate[0], 4)}, {round(estimate[1], 4)}, {round(estimate[2], 4)}, ' +
         f'{round(estimate[3], 4)}, {round(estimate[4], 4)}, {round(estimate[5], 4)}]')
 
-    poserror = [groundtruth[0] - solution.pose_estimate[0],
-                groundtruth[1] - solution.pose_estimate[1],
-                groundtruth[2] - solution.pose_estimate[2]
+    poserror = [groundtruth[0] - estimate[0],
+                groundtruth[1] - estimate[1],
+                groundtruth[2] - estimate[2]
     ]
     
     orierror = [
