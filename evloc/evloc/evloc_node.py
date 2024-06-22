@@ -222,8 +222,8 @@ class PCD(Node):
             ds_1 = 1
             ds_2 = 1
             if not self.simulated:
-                ds_1 = 2
-                ds_2 = 40
+                ds_1 = 1
+                ds_2 = 5
             
             self.publish_point_clouds(points, 'map', map_global, ds_1, ds_2)
 

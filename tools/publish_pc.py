@@ -120,7 +120,7 @@ class PCD(Node):
         map_global_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_ori.ply")
         map_global = map_global_ori.uniform_down_sample(every_k_points=int(1 / DOWN_SAMPLING_FACTOR_GLOBAL)) # Original PointCloud (Global Map)
 
-        downsample_2 = 40
+        downsample_2 = 5
         points2 = np.asarray(map_global.points)[::downsample_2] # Downsampling. Son demasiados puntos para RVIZ
         pcd_global = self.point_cloud(points2, 'map')
         self.pcd_publisher_global.publish(pcd_global)
@@ -170,7 +170,7 @@ class PCD(Node):
             real_scan_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/local_clouds/cloud_{id_cloud}.ply")
             map_local = real_scan_ori.uniform_down_sample(every_k_points=int(1 / DOWN_SAMPLING_FACTOR))         # User Selected PointCloud (Local Map)
 
-            ds_1 = 2
+            ds_1 = 1
             points = spatial_rotation(map_local.points, real_groundtruth)
             self.publish_point_clouds(points, 'map', ds_1)
 
