@@ -82,7 +82,11 @@ def generate_point_cloud(auto=False,
     #Plot Results
     sol_points = spatial_rotation(real_scan.points, solution.pose_estimate)
     
-    poserror = np.sqrt((groundtruth[0] - solution.pose_estimate[0]) ** 2 + (groundtruth[1] - solution.pose_estimate[1]) ** 2 + (groundtruth[2] - solution.pose_estimate[2]) ** 2)
+    poserror = [groundtruth[0] - solution.pose_estimate[0],
+                groundtruth[1] - solution.pose_estimate[1],
+                groundtruth[2] - solution.pose_estimate[2]
+    ]
+
     orierror = [
         abs((groundtruth[3] - solution.pose_estimate[3]) * 180 / pi),
         abs((groundtruth[4] - solution.pose_estimate[4]) * 180 / pi),

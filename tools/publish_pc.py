@@ -59,7 +59,7 @@ class PCD(Node):
         self.pcd_publisher_local = self.create_publisher(sensor_msgs.PointCloud2, 'evloc_local', 10)
         self.pcd_publisher_global = self.create_publisher(sensor_msgs.PointCloud2, 'evloc_global', 10)
 
-        self.auto_mode = True
+        self.auto_mode = False # CAMBIAR A MANO
 
     def run(self):
         id_cloud = 0

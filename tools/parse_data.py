@@ -371,7 +371,7 @@ def main():
 
         title_x = 'Nube de puntos'
 
-        title = 'Porcentaje de convergencia por nube de puntos por algoritmo'
+        title = f'Porcentaje de convergencia por nube de puntos por algortimo. ({MAX_POS_ERROR}m, {MAX_ORI_ERROR_1}º, {MAX_ORI_ERROR_2}º, {MAX_ORI_ERROR_3}º)'
         title_y = 'Porcentaje de convergencia'
         combined_conv_perc = pd.DataFrame({'DE': conv_perc_de, 'PSO': conv_perc_pso, 'IWO': conv_perc_iwo})
         showBarCombined(combined_conv_perc, title, title_x, title_y, custom_y_limit=MIN_CONVERGENCE_PERCENTAGE)
