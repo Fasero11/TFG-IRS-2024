@@ -17,14 +17,13 @@ class Color:
     UNDERLINE = '\033[4m'
     END = '\033[0m'
 
-# Azul, naranja, verde
-all_colors = ['#0072B2', '#E69F00', '#009E73']
-
+# Naranja, azul, verde
+all_colors = ['#E69F00', '#0072B2', '#009E73']
 
 #home_route = os.path.expanduser("~")
 
 current_directory = os.path.dirname(__file__)
-parent_directory = os.path.join(current_directory, '.')
+parent_directory = os.path.join(current_directory, '..')
 filepath = os.path.join(parent_directory, 'errordata.csv')
 
 MAX_POS_ERROR = 0.25 # In meters
@@ -372,6 +371,8 @@ def main():
 
         title_x = 'Nube de puntos'
 
+        title = 'Porcentaje de convergencia por nube de puntos por algoritmo'
+        title_y = 'Porcentaje de convergencia'
         combined_conv_perc = pd.DataFrame({'DE': conv_perc_de, 'PSO': conv_perc_pso, 'IWO': conv_perc_iwo})
         showBarCombined(combined_conv_perc, title, title_x, title_y, custom_y_limit=MIN_CONVERGENCE_PERCENTAGE)
 
