@@ -40,6 +40,58 @@ POP_RATIO = 0.01
 # For when NaN is calculated in add_noise_to_pc.
 warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value encountered in divide")
 
+def spatial_rotation(point, p):
+    """
+    spatialTransformation
+    The point gets transform by multiplying by the coordinate frame of the
+    first scan according to the parameters
+    Inputs:
+      point: Horizontal vector nx3
+      p:  Vertical vector 6x1 (rad)
+    Outputs:
+      transformed: Horizontal vector nx3 with the point transformed in the
+      space
+    """
+
+    cAlpha = np.cos(p[3])
+    sAlpha = np.sin(p[3])
+    cBeta = np.cos(p[4])
+    sBeta = np.sin(p[4])
+    cGamma = np.cos(p[5])
+    sGamma = np.sin(p[5])
+
+    rotation_matrix = np.array([
+        [cBeta * cGamma, -cBeta * sGamma, sBeta],
+        [cAlpha * sGamma + cGamma * sAlpha * sBeta, cAlpha * cGamma - sAlpha * sBeta * sGamma, -cBeta * sAlpha],
+        [sAlpha * sGamma - cAlpha * cGamma * sBeta, cGamma * sAlpha + cAlpha * sBeta * sGamma, cAlpha * cBeta]
+    ])
+
+    transformed = np.dot(point, rotation_matrix.T) + np.array([p[0], p[1], p[2]])
+
+    return transformed
+
+
+def get_groundtruth_data(GROUNDTRUTH_FILE_PATH, id_cloud):
+    """
+    Reads the row "id_cloud" from the GROUNDTRUTH_FILE_PATH and returns it.
+    """
+    try:
+        with open(GROUNDTRUTH_FILE_PATH, 'r') as file:
+            csv_reader = csv.reader(file)
+            
+            for _ in range(int(id_cloud)):
+                next(csv_reader)
+            
+            groundtruth_str = next(csv_reader)
+            groundtruth = np.array(groundtruth_str, dtype=float)
+
+            return groundtruth
+        
+    except FileNotFoundError:
+        print("El archivo CSV no fue encontrado.")
+    except StopIteration:
+        print("La fila especificada excede el número de filas en el archivo CSV.")
+
 class PCD(Node):
 
     def __init__(self):
@@ -63,6 +115,17 @@ class PCD(Node):
 
     def run(self):
         id_cloud = 0
+
+        # Publish global map
+        map_global_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_ori.ply")
+        map_global = map_global_ori.uniform_down_sample(every_k_points=int(1 / DOWN_SAMPLING_FACTOR_GLOBAL)) # Original PointCloud (Global Map)
+
+        downsample_2 = 40
+        points2 = np.asarray(map_global.points)[::downsample_2] # Downsampling. Son demasiados puntos para RVIZ
+        pcd_global = self.point_cloud(points2, 'map')
+        self.pcd_publisher_global.publish(pcd_global)
+        print(f"Global PointCloud with dimensions {points2.shape} has been published.")
+
         while True:
             
             if not self.auto_mode:
@@ -96,23 +159,31 @@ class PCD(Node):
                         else:
                             print("Invalid answer. Please type 'y' for yes or 'n' for no.")
 
-                time.sleep(1)
+                time.sleep(0.5)
+
+            real_groundtruth = get_groundtruth_data(GROUNDTRUTH_FILE_PATH, id_cloud)              
 
             print(Color.BOLD + "\n------------------------------------" + Color.END)
 
-            # map_global_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_ori.ply")
-            # map_global = map_global_ori.uniform_down_sample(every_k_points=int(1 / DOWN_SAMPLING_FACTOR_GLOBAL)) # Original PointCloud (Global Map)
+            print(f"{Color.BOLD} Cloud: {id_cloud} {Color.END}")
 
             real_scan_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/local_clouds/cloud_{id_cloud}.ply")
             map_local = real_scan_ori.uniform_down_sample(every_k_points=int(1 / DOWN_SAMPLING_FACTOR))         # User Selected PointCloud (Local Map)
 
-            downsample_2 = 1
-            points2 = np.asarray(map_local.points)[::downsample_2] # Downsampling. Son demasiados puntos para RVIZ
-            pcd_global = self.point_cloud(points2, 'map')
-            self.pcd_publisher_global.publish(pcd_global)
-            print(f"Global PointCloud with dimensions {points2.shape} has been published.")
+            ds_1 = 2
+            points = spatial_rotation(map_local.points, real_groundtruth)
+            self.publish_point_clouds(points, 'map', ds_1)
 
             print(Color.BOLD + "\n------------------------------------" + Color.END)
+
+
+    def publish_point_clouds(self, points, parent_frame, downsample_1):
+        
+        points = points[::downsample_1] # Downsampling. Son demasiados puntos para RVIZ
+        pcd = self.point_cloud(points, parent_frame)
+        self.pcd_publisher_local.publish(pcd)
+        print(f"Local PointCloud with dimensions {points.shape} has been published.")
+
 
     def ask_restart(self):
         while True:
