@@ -17,11 +17,14 @@ class Color:
     UNDERLINE = '\033[4m'
     END = '\033[0m'
 
+# Azul, naranja, verde
+all_colors = ['#0072B2', '#E69F00', '#009E73']
+
 
 #home_route = os.path.expanduser("~")
 
 current_directory = os.path.dirname(__file__)
-parent_directory = os.path.join(current_directory, '..')
+parent_directory = os.path.join(current_directory, '.')
 filepath = os.path.join(parent_directory, 'errordata.csv')
 
 MAX_POS_ERROR = 0.25 # In meters
@@ -146,9 +149,9 @@ def showBarCombined(dataframe, title, title_x, title_y, max_y_value=None,
         index = np.arange(len(ids))
 
         # Graficar cada algoritmo con un color diferente
-        plt.bar(index, dataframe['DE'], bar_width, label='DE', color='blue')
-        plt.bar(index + bar_width, dataframe['PSO'], bar_width, label='PSO', color='limegreen')
-        plt.bar(index + 2*bar_width, dataframe['IWO'], bar_width, label='IWO', color='red')
+        plt.bar(index, dataframe['DE'], bar_width, label='DE', color=all_colors[0])
+        plt.bar(index + bar_width, dataframe['PSO'], bar_width, label='PSO', color=all_colors[1])
+        plt.bar(index + 2*bar_width, dataframe['IWO'], bar_width, label='IWO', color=all_colors[2])
 
         # Configurar etiquetas y título
         plt.xlabel(title_x)
@@ -221,7 +224,7 @@ def showBarSimple(dataframe, title, title_x, title_y, max_y_value=None, custom_y
             plt.bar(index[i], y, color=color)
     else:
         if color_threshold:
-            colors = ['red' if y <= MIN_CONVERGENCE_PERCENTAGE else 'green' for y in y_data]
+            colors = [all_colors[1] if y <= MIN_CONVERGENCE_PERCENTAGE else all_colors[0] for y in y_data]
             plt.bar(index, y_data, color=colors)
         else:
             # Graficar las barras con un color sólido
@@ -267,30 +270,30 @@ def showInfo(data_frame, name):
     num_convergences = (conv_perc_df > MIN_CONVERGENCE_PERCENTAGE).sum()
     print(Color.CYAN + f"{name} Convergences: {num_convergences}/{conv_perc_df.count()}" + Color.END)
 
-    title_x = 'Cloud ID'
+    title_x = 'Nube de puntos'
 
-    title = f'Convergence percentage per cloud ID for {name} algorithm. ({MAX_POS_ERROR}m, {MAX_ORI_ERROR_1}º, {MAX_ORI_ERROR_2}º, {MAX_ORI_ERROR_3}º)'
-    title_y = 'Convergence percentage'
+    title = f'Porcentaje de convergencia por nube de puntos. Algortimo {name}. ({MAX_POS_ERROR}m, {MAX_ORI_ERROR_1}º, {MAX_ORI_ERROR_2}º, {MAX_ORI_ERROR_3}º)'
+    title_y = 'Porcentaje de convergencia'
     showBarSimple(conv_perc_df, title, title_x, title_y, custom_y_limit=MIN_CONVERGENCE_PERCENTAGE, color_threshold=True)
 
     title = f'Number of samples per cloud ID for {name} algorithm'
     title_y = 'Number of samples'
     showBarSimple(num_samples_df, title, title_x, title_y, custom_y_limit=10)
 
-    title = f'Execution time per cloud ID for {name} algorithm'
-    title_y = 'Execution time (seconds)'
+    title = f'Tiempo de ejecución por nube de puntos. Algoritmo {name}'
+    title_y = 'Tiempo de ejecución (segundos)'
     showErrorBarSimple(time_avg_df, time_std_df, title, title_x, title_y, color_gradient=True)
 
-    title = f'Iterations per cloud ID for {name} algorithm'
-    title_y = 'Iterations until convergence'
+    title = f'Iteraciones por nube de puntos. Algoritmo {name}'
+    title_y = 'Iteraciones'
     showErrorBarSimple(it_avg_df, it_std_df, title, title_x, title_y)
 
-    title = f'Position error (m) per cloud ID for {name} algorithm'
-    title_y = 'Position error in meters'
+    title = f'Error de posición por nube de puntos. Algoritmo {name}'
+    title_y = 'Error de posición (metros)'
     showErrorBarSimple(poserror_avg_df, poserror_std_df, title, title_x, title_y, custom_y_limit=MAX_POS_ERROR, color_gradient=True)
 
-    title = f'Orientation error per cloud ID for {name} algorithm'
-    title_y = 'Orientation error in meters'
+    title = f'Error de orientación por nube de puntos. Algoritmo {name}'
+    title_y = 'Error de orientación (grados)'
     showErrorBarSimple(orierror_avg_df, orierror_std_df, title, title_x, title_y, custom_y_limit=MAX_ORI_ERROR_COMBINED, color_gradient=True)
 
 
@@ -367,10 +370,8 @@ def main():
         print(Color.CYAN + f"PSO Convergences: {num_convergences_pso}/{conv_perc_pso.count()}" + Color.END)
         print(Color.CYAN + f"IWO Convergences: {num_convergences_iwo}/{conv_perc_iwo.count()}" + Color.END)
 
-        title_x = 'Cloud ID'
+        title_x = 'Nube de puntos'
 
-        title = f'Convergence percentage per cloud ID for each algorithm. ({MAX_POS_ERROR}m, {MAX_ORI_ERROR_1}º, {MAX_ORI_ERROR_2}º, {MAX_ORI_ERROR_3}º)'
-        title_y = 'Convergence percentage'
         combined_conv_perc = pd.DataFrame({'DE': conv_perc_de, 'PSO': conv_perc_pso, 'IWO': conv_perc_iwo})
         showBarCombined(combined_conv_perc, title, title_x, title_y, custom_y_limit=MIN_CONVERGENCE_PERCENTAGE)
 
@@ -379,23 +380,23 @@ def main():
         number_of_samples_combined = pd.DataFrame({'DE': num_samples_de, 'PSO': num_samples_pso, 'IWO': num_samples_iwo})
         showBarCombined(number_of_samples_combined, title, title_x, title_y, custom_y_limit=10)
 
-        title = 'Execution time per cloud ID for each algorithm'
-        title_y = 'Execution time (seconds)'
+        title = 'Tiempo de ejecución por nube de puntos por algortimo'
+        title_y = 'Tiempo de ejecución (segundos)'
         combined_time_avg = pd.DataFrame({'DE': time_avg_de, 'PSO': time_avg_pso, 'IWO': time_avg_iwo})
         showBarCombined(combined_time_avg, title, title_x, title_y)
 
-        title = 'Iterations per cloud ID for each algorithm'
-        title_y = 'Iterations until convergence'
+        title = 'Iteraciones por nube de puntos por algortimo'
+        title_y = 'Iteraciones'
         combined_it_avg = pd.DataFrame({'DE': it_avg_de, 'PSO': it_avg_pso, 'IWO': it_avg_iwo})
         showBarCombined(combined_it_avg, title, title_x, title_y)
 
-        title = 'Position error (m) per cloud ID for each algorithm'
-        title_y = 'Position error in meters'
+        title = 'Error de posición por nube de puntos por algortimo'
+        title_y = 'Error de posición en metros'
         combined_poserror_avg = pd.DataFrame({'DE': poserror_avg_de, 'PSO': poserror_avg_pso, 'IWO': poserror_avg_iwo})
         showBarCombined(combined_poserror_avg, title, title_x, title_y, custom_y_limit=MAX_POS_ERROR)
 
-        title = 'Orientation error per cloud ID for each algorithm'
-        title_y = 'Orientation error in meters'
+        title = 'Error de orientación por nube de puntos por algortimo'
+        title_y = 'Error de orientación en'
         combined_orierror_avg = pd.DataFrame({'DE': orierror_avg_de, 'PSO': orierror_avg_pso, 'IWO': orierror_avg_iwo})
         showBarCombined(combined_orierror_avg, title, title_x, title_y, custom_y_limit=MAX_ORI_ERROR_COMBINED)
 
