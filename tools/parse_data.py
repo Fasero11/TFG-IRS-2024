@@ -79,7 +79,7 @@ def getOriErrorStd(data_frame):
     return total_orierror_std
 
 
-def getOriErrorAvg(data_frame):
+def getOriErrorStats(data_frame):
     ids = data_frame['id_cloud'].tolist()
     orierror_1 = data_frame['orierror_1'].tolist()
     orierror_2 = data_frame['orierror_2'].tolist()
@@ -93,37 +93,17 @@ def getOriErrorAvg(data_frame):
     df_pares_ordenados_2 = pd.DataFrame(pares_ordenados_2, columns=['id_cloud', 'orierror_2'])
     df_pares_ordenados_3 = pd.DataFrame(pares_ordenados_3, columns=['id_cloud', 'orierror_3'])
 
-    orierror_avg_1 = df_pares_ordenados_1.groupby('id_cloud')['orierror_1'].mean()
-    orierror_avg_2 = df_pares_ordenados_2.groupby('id_cloud')['orierror_2'].mean()
-    orierror_avg_3 = df_pares_ordenados_3.groupby('id_cloud')['orierror_3'].mean()
+    orierror_stats_1 = df_pares_ordenados_1.groupby('id_cloud')['orierror_1'].median()
+    orierror_stats_2 = df_pares_ordenados_2.groupby('id_cloud')['orierror_2'].median()
+    orierror_stats_3 = df_pares_ordenados_3.groupby('id_cloud')['orierror_3'].median()
 
-    total_orierror_avg = (orierror_avg_1 + orierror_avg_2 + orierror_avg_3) / 3
+    total_orierror_stats = (orierror_stats_1 + orierror_stats_2 + orierror_stats_3) / 3
 
-    return total_orierror_avg
-
-
-def getDataStd(data_frame, col_id):
-    ids = data_frame['id_cloud'].tolist()
-    column_data = data_frame[col_id].tolist()
-
-    pares_ordenados = sorted(zip(ids, column_data))
-    df_pares_ordenados = pd.DataFrame(pares_ordenados, columns=['id_cloud', col_id])
-
-    # Calcular el rango intercuartil (IQR)
-    Q1 = df_pares_ordenados.groupby('id_cloud')[col_id].quantile(0.25)
-    Q3 = df_pares_ordenados.groupby('id_cloud')[col_id].quantile(0.75)
-    IQR = Q3 - Q1
-
-    # Calcular el rango medio absoluto de la desviación (MAD)
-    MAD = df_pares_ordenados.groupby('id_cloud')[col_id].apply(lambda x: np.median(np.abs(x - x.median())))
-
-    # Calcular la desviación estándar
-    STD = df_pares_ordenados.groupby('id_cloud')[col_id].std()
-
-    return STD
+    return total_orierror_stats
 
 
-def getDataAvg(data_frame, col_id):
+def getDataStats(data_frame, col_id):
+
     ids = data_frame['id_cloud'].tolist()
     column_data = data_frame[col_id].tolist()
 
@@ -131,43 +111,57 @@ def getDataAvg(data_frame, col_id):
 
     df_pares_ordenados = pd.DataFrame(pares_ordenados, columns=['id_cloud', col_id])
 
-    data_avg = df_pares_ordenados.groupby('id_cloud')[col_id].mean()
+    data_stats = df_pares_ordenados.groupby('id_cloud')[col_id].median()
 
-    return data_avg
+    return data_stats
 
 
 
 def showBarCombined(dataframe, title, title_x, title_y, max_y_value=None,
                     custom_y_limit = None):
-        # Graficar los datos con barras
-        plt.figure(figsize=(14, 6))
+    mid_index = len(dataframe) // 2
+    dataframe_part1 = dataframe.iloc[:22]
+    dataframe_part2 = dataframe.iloc[22:44]
 
+    # Función interna para graficar una parte del dataframe
+    def plot_part(dataframe_part, title_suffix):
+        plt.figure(figsize=(14, 6))
+        
         # Obtener los datos para graficar
-        ids = dataframe.index
+        ids = dataframe_part.index
         bar_width = 0.2
         index = np.arange(len(ids))
 
-        # Graficar cada algoritmo con un color diferente
-        plt.bar(index, dataframe['DE'], bar_width, label='DE', color=all_colors[0])
-        plt.bar(index + bar_width, dataframe['PSO'], bar_width, label='PSO', color=all_colors[1])
-        plt.bar(index + 2*bar_width, dataframe['IWO'], bar_width, label='IWO', color=all_colors[2])
+        # Convertir los datos a arrays de numpy
+        de_values = dataframe_part['DE'].values
+        pso_values = dataframe_part['PSO'].values
+        iwo_values = dataframe_part['IWO'].values
 
-        # Configurar etiquetas y título
-        plt.xlabel(title_x)
-        plt.ylabel(title_y)
-        plt.title(title)
-        plt.xticks(index + bar_width, ids)
-        plt.legend()
+        # Crear las barras agrupadas
+        plt.bar(index, de_values, bar_width, label='DE', color=all_colors[0])
+        plt.bar(index + bar_width, pso_values, bar_width, label='PSO', color=all_colors[1])
+        plt.bar(index + 2 * bar_width, iwo_values, bar_width, label='IWO', color=all_colors[2])
 
         if custom_y_limit:
             plt.axhline(y=custom_y_limit, color='gray', linestyle='--')
 
-        if max_y_value:
-            plt.ylim(0, max_y_value)
+        # Configurar etiquetas y título
+        plt.xlabel(title_x)
+        plt.ylabel(title_y)
+        plt.title(f"{title} - {title_suffix}")
+        plt.xticks(index + bar_width, ids)
+        plt.legend()
 
         # Mostrar la gráfica
         plt.tight_layout()
         plt.show()
+
+    # Graficar la primera parte
+    plot_part(dataframe_part1, "Primeras 22 Medidas")
+
+    # Graficar la segunda parte
+    plot_part(dataframe_part2, "Últimas 22 Medidas")
+
 
 
 def showErrorBarSimple(dataframe_avg, stds, title, title_x, title_y, max_y_value=None, custom_y_limit=None, color_gradient=False, color_threshold=False):
@@ -200,6 +194,27 @@ def showErrorBarSimple(dataframe_avg, stds, title, title_x, title_y, max_y_value
     # Mostrar la gráfica
     plt.tight_layout()
     plt.show()
+
+
+def getDataStd(data_frame, col_id):
+    ids = data_frame['id_cloud'].tolist()
+    column_data = data_frame[col_id].tolist()
+
+    pares_ordenados = sorted(zip(ids, column_data))
+    df_pares_ordenados = pd.DataFrame(pares_ordenados, columns=['id_cloud', col_id])
+
+    # Calcular el rango intercuartil (IQR)
+    Q1 = df_pares_ordenados.groupby('id_cloud')[col_id].quantile(0.25)
+    Q3 = df_pares_ordenados.groupby('id_cloud')[col_id].quantile(0.75)
+    IQR = Q3 - Q1
+
+    # Calcular el rango medio absoluto de la desviación (MAD)
+    MAD = df_pares_ordenados.groupby('id_cloud')[col_id].apply(lambda x: np.median(np.abs(x - x.median())))
+
+    # Calcular la desviación estándar
+    STD = df_pares_ordenados.groupby('id_cloud')[col_id].std()
+
+    return STD
 
 
 def showBarSimple(dataframe, title, title_x, title_y, max_y_value=None, custom_y_limit=None, color_gradient=False, color_threshold=False):
@@ -253,16 +268,16 @@ def showInfo(data_frame, name):
     num_samples_df = getSampleCounts(data_frame)
 
     # Calcula las medias para cada algoritmo
-    time_avg_df = getDataAvg(data_frame, 'time')
+    time_avg_df = getDataStats(data_frame, 'time')
     time_std_df = getDataStd(data_frame, 'time')
 
-    it_avg_df = getDataAvg(data_frame, 'it')
+    it_avg_df = getDataStats(data_frame, 'it')
     it_std_df = getDataStd(data_frame, 'it')
 
-    poserror_avg_df = getDataAvg(data_frame, 'poserror')
+    poserror_avg_df = getDataStats(data_frame, 'poserror')
     poserror_std_df = getDataStd(data_frame, 'poserror')
 
-    orierror_avg_df = getOriErrorAvg(data_frame)
+    orierror_stats_df = getOriErrorStats(data_frame)
     orierror_std_df = getOriErrorStd(data_frame)
 
     conv_perc_df = getConvPerc(data_frame)
@@ -293,7 +308,7 @@ def showInfo(data_frame, name):
 
     title = f'Error de orientación por nube de puntos. Algoritmo {name}'
     title_y = 'Error de orientación (grados)'
-    showErrorBarSimple(orierror_avg_df, orierror_std_df, title, title_x, title_y, custom_y_limit=MAX_ORI_ERROR_COMBINED, color_gradient=True)
+    showErrorBarSimple(orierror_stats_df, orierror_std_df, title, title_x, title_y, custom_y_limit=MAX_ORI_ERROR_COMBINED, color_gradient=True)
 
 
 def main():
@@ -337,30 +352,38 @@ def main():
         pso_data = data[data['algorithm'] == 2]
         iwo_data = data[data['algorithm'] == 3]
 
+        conv_perc_de = getConvPerc(de_data)
+        conv_perc_pso = getConvPerc(pso_data)
+        conv_perc_iwo = getConvPerc(iwo_data)
+
         num_samples_de = getSampleCounts(de_data)
         num_samples_pso = getSampleCounts(pso_data)
         num_samples_iwo = getSampleCounts(iwo_data)
 
         # Calcula las medias para cada algoritmo
-        time_avg_de = getDataAvg(de_data, 'time')
-        time_avg_pso = getDataAvg(pso_data, 'time')
-        time_avg_iwo = getDataAvg(iwo_data, 'time')
+        time_avg_de = getDataStats(de_data, 'time')
+        time_avg_pso = getDataStats(pso_data, 'time')
+        time_avg_iwo = getDataStats(iwo_data, 'time')
 
-        it_avg_de = getDataAvg(de_data, 'it')
-        it_avg_pso = getDataAvg(pso_data, 'it')
-        it_avg_iwo = getDataAvg(iwo_data, 'it')
+        it_avg_de = getDataStats(de_data, 'it')
+        it_avg_pso = getDataStats(pso_data, 'it')
+        it_avg_iwo = getDataStats(iwo_data, 'it')
 
-        poserror_avg_de = getDataAvg(de_data, 'poserror')
-        poserror_avg_pso = getDataAvg(pso_data, 'poserror')
-        poserror_avg_iwo = getDataAvg(iwo_data, 'poserror')
+        poserror_avg_de = getDataStats(de_data, 'poserror')
+        poserror_avg_pso = getDataStats(pso_data, 'poserror')
+        poserror_avg_iwo = getDataStats(iwo_data, 'poserror')
 
-        orierror_avg_de = getOriErrorAvg(de_data)
-        orierror_avg_pso = getOriErrorAvg(pso_data)
-        orierror_avg_iwo = getOriErrorAvg(iwo_data)
+        orierror1_stats_de = getDataStats(de_data, 'orierror_1')
+        orierror1_stats_pso = getDataStats(pso_data, 'orierror_1')
+        orierror1_stats_iwo = getDataStats(iwo_data, 'orierror_1')
 
-        conv_perc_de = getConvPerc(de_data)
-        conv_perc_pso = getConvPerc(pso_data)
-        conv_perc_iwo = getConvPerc(iwo_data)
+        orierror2_stats_de = getDataStats(de_data, 'orierror_2')
+        orierror2_stats_pso = getDataStats(pso_data, 'orierror_2')
+        orierror2_stats_iwo = getDataStats(iwo_data, 'orierror_2')
+
+        orierror3_stats_de = getDataStats(de_data, 'orierror_3')
+        orierror3_stats_pso = getDataStats(pso_data, 'orierror_3')
+        orierror3_stats_iwo = getDataStats(iwo_data, 'orierror_3')
 
         num_convergences_de = (conv_perc_de > MIN_CONVERGENCE_PERCENTAGE).sum()
         num_convergences_pso = (conv_perc_pso > MIN_CONVERGENCE_PERCENTAGE).sum()
@@ -376,10 +399,10 @@ def main():
         combined_conv_perc = pd.DataFrame({'DE': conv_perc_de, 'PSO': conv_perc_pso, 'IWO': conv_perc_iwo})
         showBarCombined(combined_conv_perc, title, title_x, title_y, custom_y_limit=MIN_CONVERGENCE_PERCENTAGE)
 
-        title = 'Number of samples per cloud ID for each algorithm'
-        title_y = 'Number of samples'
-        number_of_samples_combined = pd.DataFrame({'DE': num_samples_de, 'PSO': num_samples_pso, 'IWO': num_samples_iwo})
-        showBarCombined(number_of_samples_combined, title, title_x, title_y, custom_y_limit=10)
+        # title = 'Number of samples per cloud ID for each algorithm'
+        # title_y = 'Number of samples'
+        # number_of_samples_combined = pd.DataFrame({'DE': num_samples_de, 'PSO': num_samples_pso, 'IWO': num_samples_iwo})
+        # showBarCombined(number_of_samples_combined, title, title_x, title_y, custom_y_limit=10)
 
         title = 'Tiempo de ejecución por nube de puntos por algortimo'
         title_y = 'Tiempo de ejecución (segundos)'
@@ -396,10 +419,20 @@ def main():
         combined_poserror_avg = pd.DataFrame({'DE': poserror_avg_de, 'PSO': poserror_avg_pso, 'IWO': poserror_avg_iwo})
         showBarCombined(combined_poserror_avg, title, title_x, title_y, custom_y_limit=MAX_POS_ERROR)
 
-        title = 'Error de orientación por nube de puntos por algortimo'
-        title_y = 'Error de orientación en'
-        combined_orierror_avg = pd.DataFrame({'DE': orierror_avg_de, 'PSO': orierror_avg_pso, 'IWO': orierror_avg_iwo})
-        showBarCombined(combined_orierror_avg, title, title_x, title_y, custom_y_limit=MAX_ORI_ERROR_COMBINED)
+        title = 'Error de orientación (Cabeceo) por nube de puntos por algortimo'
+        title_y = 'Error de orientación en grados'
+        combined_orierror_stats = pd.DataFrame({'DE': orierror1_stats_de, 'PSO': orierror1_stats_pso, 'IWO': orierror1_stats_iwo})
+        showBarCombined(combined_orierror_stats, title, title_x, title_y, custom_y_limit=MAX_ORI_ERROR_COMBINED)
+
+        title = 'Error de orientación (Alabeo) por nube de puntos por algortimo'
+        title_y = 'Error de orientación en grados'
+        combined_orierror_stats = pd.DataFrame({'DE': orierror2_stats_de, 'PSO': orierror2_stats_pso, 'IWO': orierror2_stats_iwo})
+        showBarCombined(combined_orierror_stats, title, title_x, title_y, custom_y_limit=MAX_ORI_ERROR_COMBINED)
+
+        title = 'Error de orientación (Guiñada) por nube de puntos por algortimo'
+        title_y = 'Error de orientación en grados'
+        combined_orierror_stats = pd.DataFrame({'DE': orierror3_stats_de, 'PSO': orierror3_stats_pso, 'IWO': orierror3_stats_iwo})
+        showBarCombined(combined_orierror_stats, title, title_x, title_y, custom_y_limit=MAX_ORI_ERROR_COMBINED)
 
 if __name__ == '__main__':
     main()
