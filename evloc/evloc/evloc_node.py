@@ -248,6 +248,7 @@ class PCD(Node):
                         time.sleep(1)
 
                     print(f"\n{Color.BOLD} Animation Finished {Color.END}")
+                    count = 0
                     animation_not_finished = self.ask_restart("Restart Animation? (y/n): ")
 
             else:
@@ -271,7 +272,7 @@ class PCD(Node):
             self.groundtruth = np.full(6, np.inf)
 
             if not self.auto_mode:
-                restart = self.ask_restart("Restart? (y/n): ")
+                restart = self.ask_restart("Restart node? (y/n): ")
                 if not restart:
                     self.destroy_node()  # Cierra el nodo antes de salir del bucle
                     break
