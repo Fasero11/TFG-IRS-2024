@@ -47,7 +47,7 @@ def gl_6dof(map_global, scancloud, groundtruth, algorithm, version_fitness, err_
         D=algorithm.D
         F=algorithm.F
         CR=algorithm.CR
-        [pcAligned, estimate, bestCost, rmse_array, it, stop_condition] = de_6dof(real_scan, map_global,mapmax,mapmin,err_dis,NPini,D,iter_max,F,CR,version_fitness)
+        [pcAligned, allEstimates, bestCost, rmse_array, it, stop_condition] = de_6dof(real_scan, map_global,mapmax,mapmin,err_dis,NPini,D,iter_max,F,CR,version_fitness)
 
     elif (algorithm.type == 2): # PSO
         NPini=algorithm.NPini
@@ -58,7 +58,7 @@ def gl_6dof(map_global, scancloud, groundtruth, algorithm, version_fitness, err_
         c1=algorithm.c1
         c2=algorithm.c2
 
-        [pcAligned, estimate, bestCost, rmse_array, it, stop_condition] = pso_6dof(real_scan,map_global,mapmax, mapmin, err_dis, NPini, D ,w, wdamp, c1, c2, iter_max,version_fitness)
+        [pcAligned, allEstimates, bestCost, rmse_array, it, stop_condition] = pso_6dof(real_scan,map_global,mapmax, mapmin, err_dis, NPini, D ,w, wdamp, c1, c2, iter_max,version_fitness)
 
     elif (algorithm.type == 3): # IWO
         NPini=algorithm.NPini
@@ -69,9 +69,9 @@ def gl_6dof(map_global, scancloud, groundtruth, algorithm, version_fitness, err_
         exponent=algorithm.exponent
         sigma_initial=algorithm.sigma_initial
         sigma_final=algorithm.sigma_final
-        [pcAligned, estimate, bestCost, rmse_array, it, stop_condition] = iwo_6dof(real_scan, map_global, mapmax, mapmin, err_dis, NPini, D , Smin, Smax, exponent, sigma_initial, sigma_final, iter_max, version_fitness)
+        [pcAligned, allEstimates, bestCost, rmse_array, it, stop_condition] = iwo_6dof(real_scan, map_global, mapmax, mapmin, err_dis, NPini, D , Smin, Smax, exponent, sigma_initial, sigma_final, iter_max, version_fitness)
 
-
+    estimate = allEstimates[-1]
 
     final_time = time.time()
     
@@ -97,6 +97,6 @@ def gl_6dof(map_global, scancloud, groundtruth, algorithm, version_fitness, err_
 
     print(Color.PURPLE + f'\nEl error de posicion es: [{round(poserror[0],4)}, {round(poserror[1],4)}, {round(poserror[2],4)}] m, y el de orientacion: [{round(orierror[0],4)}, {round(orierror[1],4)}, {round(orierror[2],4)}] grados' + Color.END)
     print(Color.GREEN + f'Tiempo transcurrido: {round(final_time-initial_time, 2)} segundos' + Color.END)
-    solution = Solution(it, (final_time-initial_time), estimate, poserror, orierror, map_global, real_scan.points, stop_condition)
+    solution = Solution(it, (final_time-initial_time), allEstimates, poserror, orierror, map_global, real_scan.points, stop_condition)
 
     return solution

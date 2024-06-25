@@ -30,6 +30,8 @@ def iwo_6dof(scanCloud, mapCloud, mapmax, mapmin, err_dis, NPini, D , Smin, Smax
     higherAngle_rz = mapmax[5]  # Rotation around Z
     lowerAngle_rz = mapmin[5]
 
+    all_best_solutions = [] # Store best solution every iteration
+
     # Problem Definition
 
     nVar = D  # Number of Decision Variables
@@ -266,6 +268,9 @@ def iwo_6dof(scanCloud, mapCloud, mapmax, mapmin, err_dis, NPini, D , Smin, Smax
             count = 0
         count += 1
 
+        end_time = time.time()
+        #print(f'Count: {count} in {round(end_time-start_time, 2)} seconds') # DEBUG
+
         # Convergence indicators
         if bestParticleCostnow < bestParticleCost:  # ¿Mejora el mejor respecto a la anterior iteración?
             count_worsefix = 0
@@ -308,18 +313,20 @@ def iwo_6dof(scanCloud, mapCloud, mapmax, mapmin, err_dis, NPini, D , Smin, Smax
             print(f'Population converged in: {it} iterations and condition: {stringcondition}')
             break
 
+        # Save current best solution
+        all_best_solutions.append(BestSol.Position)
     ########################################################
     ########################################################
         
-    BestWeed = BestSol.Position
+    # BestWeed = BestSol.Position
 
     rmse_array =  BestCost
 
     bestCost = BestSol.Cost
 
     pcAligned = o3d.geometry.PointCloud()
-    pcAligned.points = o3d.utility.Vector3dVector(spatial_rotation(scanCloud.points, BestWeed))
+    pcAligned.points = o3d.utility.Vector3dVector(spatial_rotation(scanCloud.points, all_best_solutions[-1]))
 
-    return(pcAligned, BestWeed, bestCost, rmse_array, it, stringcondition)
+    return(pcAligned, all_best_solutions, bestCost, rmse_array, it, stringcondition)
 
 ######################################################################

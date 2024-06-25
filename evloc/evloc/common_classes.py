@@ -20,29 +20,20 @@ class Solution:
     Class where the solution of the algorithm is stored.
     it: Number of iterations to converge.
     timediff: Time elapsed during the execution.
-    estimate: Estimated pose
+    all_estimates: List containing the best estimated pose of every iteration
     pos_error: Position error in meters
     ori_error: Orientation error in degrees.
     map_global: Global map
     real_scan: Local map
     """
-    def __init__(self, it, timediff, estimate, pos_error, ori_error, map_global, real_scan, stop_condition):
+    def __init__(self, it, timediff, all_estimates, pos_error, ori_error, map_global, real_scan, stop_condition):
         self.it = it
         self.time = timediff
-        self.pose_estimate = estimate
+        self.all_pose_estimates = all_estimates
         self.pos_error = pos_error
         self.ori_error = ori_error
         self.map = map_global
-        self.loc_scan = self.get_loc_scan(real_scan, estimate)
         self.stop_condition = stop_condition
-
-    def get_loc_scan(self, real_scan, estimate):
-        new_points = spatial_rotation(real_scan, estimate)
-
-        new_pc = o3d.geometry.PointCloud()
-        new_pc.points = o3d.utility.Vector3dVector(new_points)
-
-        return new_pc
     
 class Algorithm:
     """

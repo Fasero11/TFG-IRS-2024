@@ -13,14 +13,13 @@ import warnings
 
 from ament_index_python.packages import get_package_share_directory
 
-from evloc.gl_6dof import gl_6dof
 from evloc.read_points import read_points
 from evloc.common_classes import Color
-from evloc.de_6dof import de_6dof
-from evloc.pso_6dof import pso_6dof 
-from evloc.iwo_6dof import iwo_6dof 
 from evloc.generate_point_cloud import generate_point_cloud
 from evloc.ask_params import ask_params
+
+from evloc.common_classes import spatial_rotation
+import time
 
 ########### GLOBAL CONSTANTS ###########
 
@@ -87,12 +86,15 @@ class PCD(Node):
         # Declara el parámetro mi_parametro con un valor predeterminado
         self.declare_parameter('auto', False)
         self.declare_parameter('simulated', False)
+        self.declare_parameter('animation', False)
 
         auto_color = Color.RED
         simulated_color = Color.RED
+        animation_color = Color.RED
 
         self.auto_mode = self.get_parameter('auto').value
         self.simulated = self.get_parameter('simulated').value
+        self.animation = self.get_parameter('animation').value
 
         if self.auto_mode:
             auto_color = Color.GREEN
@@ -100,8 +102,12 @@ class PCD(Node):
         if self.simulated:
             simulated_color = Color.GREEN
 
+        if self.animation:
+            animation_color = Color.GREEN
+
         print(auto_color + f"\nAuto Mode: {self.auto_mode}" + Color.END)
         print(simulated_color + f"Simulated: {self.simulated}" + Color.END)
+        print(animation_color + f"Animation: {self.animation}" + Color.END)
 
         self.pcd_subscriber = self.create_subscription(
             sensor_msgs.PointCloud2,
@@ -203,7 +209,9 @@ class PCD(Node):
             print(f"\n\nObtained global scan with dimensions {np.asarray(map_global.points).shape}")
             print(f"Obtained local scan with dimensions {np.asarray(map_local.points).shape}\n")
 
-            points = generate_point_cloud(auto=self.auto_mode,
+            # all_best_solutions is a list containing the best solution found each iteration of the algorithm.
+            # The last element of the list will be the best solution of them all.
+            all_best_solutions = generate_point_cloud(auto=self.auto_mode,
                                           id_cloud = id_cloud,
                                           err_dis = err_dis, 
                                           unif_noise = unif_noise,
@@ -215,24 +223,55 @@ class PCD(Node):
                                           real_scan = map_local,
                                           groundtruth = real_groundtruth)
 
-            if points is None:
-                print("Error generating point cloud.")
-                break
-            
-            ds_1 = 1
-            ds_2 = 1
-            if not self.simulated:
+
+            if self.animation:
+                count = 0
+                animation_not_finished = self.ask_restart("Start Animation? (y/n): ")
+                while animation_not_finished:
+                    for sol in all_best_solutions:
+                        count += 1
+
+                        points = spatial_rotation(map_local.points, sol)
+
+                        if points is None:
+                            print("Error generating point cloud.")
+                            break
+                        
+                        ds_1 = 1
+                        ds_2 = 1
+                        if not self.simulated:
+                            ds_1 = 1
+                            ds_2 = 5
+                        
+                        self.publish_point_clouds(points, 'map', map_global, ds_1, ds_2, silent=True)
+                        print(f"{Color.BOLD} Published solution {count}/{len(all_best_solutions)} {Color.END}")
+                        time.sleep(1)
+
+                    print(f"\n{Color.BOLD} Animation Finished {Color.END}")
+                    animation_not_finished = self.ask_restart("Restart Animation? (y/n): ")
+
+            else:
+                # Just show the best solution of them all. (last element of all_best_solutions)
+                points = spatial_rotation(map_local.points, all_best_solutions)
+
+                if points is None:
+                    print("Error generating point cloud.")
+                    break
+                
                 ds_1 = 1
-                ds_2 = 5
-            
-            self.publish_point_clouds(points, 'map', map_global, ds_1, ds_2)
+                ds_2 = 1
+                if not self.simulated:
+                    ds_1 = 1
+                    ds_2 = 5
+                
+                self.publish_point_clouds(points, 'map', map_global, ds_1, ds_2)
 
             # Reset variables obtained from simulation
             self.cloud_points = None
             self.groundtruth = np.full(6, np.inf)
 
             if not self.auto_mode:
-                restart = self.ask_restart()
+                restart = self.ask_restart("Restart? (y/n): ")
                 if not restart:
                     self.destroy_node()  # Cierra el nodo antes de salir del bucle
                     break
@@ -245,9 +284,9 @@ class PCD(Node):
 
             print(Color.BOLD + "\n------------------------------------" + Color.END)
 
-    def ask_restart(self):
+    def ask_restart(self, text):
         while True:
-            user_input = input("Restart? (y/n): ")
+            user_input = input(text)
             if user_input == 'y':
                 return True
             elif user_input == 'n':
@@ -256,17 +295,19 @@ class PCD(Node):
                 print("Invalid answer. Please type 'y' for yes or 'n' for no.")
 
 
-    def publish_point_clouds(self, points, parent_frame, global_map, downsample_1, downsample_2):
+    def publish_point_clouds(self, points, parent_frame, global_map, downsample_1, downsample_2, silent=False):
         
         points = points[::downsample_1] # Downsampling. Son demasiados puntos para RVIZ
         pcd = self.point_cloud(points, parent_frame)
         self.pcd_publisher_local.publish(pcd)
-        print(f"Local PointCloud with dimensions {points.shape} has been published.")
+        if not silent:
+            print(f"Local PointCloud with dimensions {points.shape} has been published.")
 
         points2 = np.asarray(global_map.points)[::downsample_2] # Downsampling. Son demasiados puntos para RVIZ
         pcd_global = self.point_cloud(points2, parent_frame)
         self.pcd_publisher_global.publish(pcd_global)
-        print(f"Global PointCloud with dimensions {points2.shape} has been published.")
+        if not silent:
+            print(f"Global PointCloud with dimensions {points2.shape} has been published.")
 
     def point_cloud(self, points, parent_frame):
         """ Creates a point cloud message.

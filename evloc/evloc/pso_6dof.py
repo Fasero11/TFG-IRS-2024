@@ -44,6 +44,8 @@ def pso_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D, w, wdamp, c1, c2,
     higherAngle_rz = mapmax[5]  # Rotation around Z
     lowerAngle_rz = mapmin[5]
 
+    all_best_solutions = [] # Store best solution every iteration
+
     # Problem Definition
 
     nVar = D            # Number of Decision Variables
@@ -331,6 +333,8 @@ def pso_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D, w, wdamp, c1, c2,
             count=0
         count=count+1
         end_time = time.time()
+        
+        #print(f'Count: {count} in {round(end_time-start_time, 2)} seconds') # DEBUG
 
         # Convergence Indicators
         if bestParticlecostnow < bestParticlecost:  # ¿Mejora el mejor respecto a la iteración anterior?
@@ -380,15 +384,16 @@ def pso_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D, w, wdamp, c1, c2,
             break
 
     
-
+        # Save current best solution
+        all_best_solutions.append(swarm.global_best_position)
     ########################################################
     ########################################################
     
-    BestParticle = swarm.global_best_position
+    # BestParticle = swarm.global_best_position
     bestcost = swarm.global_best_cost
     rmse_array =  Bestcosts
 
     pcAligned = o3d.geometry.PointCloud()
-    pcAligned.points = o3d.utility.Vector3dVector(spatial_rotation(scanCloud.points, BestParticle))
+    pcAligned.points = o3d.utility.Vector3dVector(spatial_rotation(scanCloud.points, all_best_solutions[-1]))
 
-    return(pcAligned, BestParticle, bestcost, rmse_array, it, stringcondition)
+    return(pcAligned, all_best_solutions, bestcost, rmse_array, it, stringcondition)

@@ -4,7 +4,6 @@ import os
 from evloc.common_classes import Color
 from evloc.gl_6dof import gl_6dof
 from evloc.save_data import save_error_data
-from evloc.common_classes import spatial_rotation
 from evloc.common_classes import Algorithm
 from evloc.evloc_constants import *
 
@@ -79,21 +78,20 @@ def generate_point_cloud(auto=False,
 
     solution = gl_6dof(map_global, real_scan, groundtruth, algorithm, version_fitness, err_dis, unif_noise)
 
-    #Plot Results
-    sol_points = spatial_rotation(real_scan.points, solution.pose_estimate)
+    best_estimate = solution.all_pose_estimates[-1]
     
-    poserror = [groundtruth[0] - solution.pose_estimate[0],
-                groundtruth[1] - solution.pose_estimate[1],
-                groundtruth[2] - solution.pose_estimate[2]
+    poserror = [groundtruth[0] - best_estimate[0],
+                groundtruth[1] - best_estimate[1],
+                groundtruth[2] - best_estimate[2]
     ]
 
     orierror = [
-        abs((groundtruth[3] - solution.pose_estimate[3]) * 180 / pi),
-        abs((groundtruth[4] - solution.pose_estimate[4]) * 180 / pi),
-        abs((groundtruth[5] - solution.pose_estimate[5]) * 180 / pi)
+        abs((groundtruth[3] - best_estimate[3]) * 180 / pi),
+        abs((groundtruth[4] - best_estimate[4]) * 180 / pi),
+        abs((groundtruth[5] - best_estimate[5]) * 180 / pi)
     ]
 
     save_error_data(id_cloud, algorithm_type, user_NPini, user_iter_max, D, F, CR, solution.time, solution.it, poserror, orierror, w, wdamp, c1, c2,
                     Smin, Smax, exponent, sigma_initial, sigma_final, solution.stop_condition)
 
-    return sol_points
+    return solution.all_pose_estimates
