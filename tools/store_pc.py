@@ -103,7 +103,7 @@ class PCD(Node):
 
     def store_groundtruth(self, groundtruth):
 
-        filename = "sim_groundtruth.csv"
+        filename = "sim_groundtruth_data.csv"
         filepath = os.path.join(home_route, filename)
 
         # Initializing CSV file with header if it doesn't exist
@@ -147,6 +147,9 @@ class PCD(Node):
             print(f"Stored sim_pc_{id} of dimensions {np.asarray(map_local.points).shape}")
 
             not_finished = self.ask_restart('Store?')
+
+            self.cloud_points = None
+            self.groundtruth = np.full(6, np.inf)
             id += 1
 
     def ask_restart(self, prompt):

@@ -122,7 +122,7 @@ class PCD(Node):
 
         downsample_2 = 5 # Downsampling for better visualization
         points2 = np.asarray(map_global.points)[::downsample_2] # Downsampling. Son demasiados puntos para RVIZ
-        pcd_global = self.point_cloud(points2, 'map')
+        pcd_global = self.point_cloud(points2, 'base_footprint')
         self.pcd_publisher_global.publish(pcd_global)
         print(f"Global PointCloud with dimensions {points2.shape} has been published.")
 
