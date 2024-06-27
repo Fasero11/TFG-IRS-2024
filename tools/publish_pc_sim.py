@@ -23,6 +23,8 @@ PACKAGE_PATH = os.path.join(get_package_share_directory('evloc'), 'resources')
 GROUNDTRUTH_FILE_PATH = f"{PACKAGE_PATH}/sim_groundtruth_data.csv"
 LOCAL_CLOUDS_FOLDER = f"{PACKAGE_PATH}/sim_local_clouds"
 
+GLOBAL_OFFSET = [0.2,0.1,0,0,0,0.1]
+
 ########################################
 
 # Filter out the RuntimeWarning for invalid value encountered in divide
@@ -121,8 +123,9 @@ class PCD(Node):
         map_global_unfiltered = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_sim.pcd")
         map_global = filter_map_height(map_global_unfiltered, 0, 1.35)
 
-        downsample_2 = 5 # Downsampling for better visualization
+        downsample_2 = 1 # Downsampling for better visualization
         points2 = np.asarray(map_global.points)[::downsample_2] # Downsampling. Son demasiados puntos para RVIZ
+        points2 = spatial_rotation(map_global.points, GLOBAL_OFFSET)
         pcd_global = self.point_cloud(points2, 'base_footprint')
         self.pcd_publisher_global.publish(pcd_global)
         print(f"Global PointCloud with dimensions {points2.shape} has been published.")

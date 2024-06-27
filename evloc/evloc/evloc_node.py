@@ -209,7 +209,7 @@ class PCD(Node):
                 map_local = filter_map_height(map_local_unfiltered, 0, 1.35)
 
             else:
-                real_scan_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/local_clouds/cloud_{id_cloud}.ply")
+                real_scan_ori = o3d.io.read_point_cloud(f"{LOCAL_CLOUDS_FOLDER}/cloud_{id_cloud}.ply")
                 map_local = real_scan_ori.uniform_down_sample(every_k_points=int(1 / DOWN_SAMPLING_FACTOR))         # User Selected PointCloud (Local Map)
                 real_groundtruth = get_groundtruth_data(GROUNDTRUTH_FILE_PATH, id_cloud)              
 
