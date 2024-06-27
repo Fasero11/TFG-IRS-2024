@@ -244,10 +244,8 @@ class PCD(Node):
                             break
                         
                         ds_1 = 1
-                        ds_2 = 1
                         if not self.simulated:
                             ds_1 = 1
-                            ds_2 = 5
                         
                         self.publish_point_clouds(points, fixed_frame, ds_1, silent=True)
                         print(f"{Color.BOLD} Published solution {count}/{len(all_best_solutions)} {Color.END}")
@@ -259,7 +257,7 @@ class PCD(Node):
 
             else:
                 # Just show the best solution of them all. (last element of all_best_solutions)
-                points = spatial_rotation(map_local.points, all_best_solutions)
+                points = spatial_rotation(map_local.points, all_best_solutions[-1])
 
                 if points is None:
                     print("Error generating point cloud.")
