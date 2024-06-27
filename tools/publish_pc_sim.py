@@ -14,24 +14,14 @@ import warnings
 
 from ament_index_python.packages import get_package_share_directory
 
-from evloc.gl_6dof import gl_6dof
-from evloc.read_points import read_points
 from evloc.common_classes import Color
-from evloc.de_6dof import de_6dof
-from evloc.pso_6dof import pso_6dof 
-from evloc.iwo_6dof import iwo_6dof 
-from evloc.generate_point_cloud import generate_point_cloud
-from evloc.ask_params import ask_params
 
 ########### GLOBAL CONSTANTS ###########
 
 PACKAGE_PATH = os.path.join(get_package_share_directory('evloc'), 'resources')
 
-GROUNDTRUTH_FILE_PATH = f"{PACKAGE_PATH}/groundtruth_data.csv"
-LOCAL_CLOUDS_FOLDER = f"{PACKAGE_PATH}/local_clouds"
-
-DOWN_SAMPLING_FACTOR_GLOBAL = 0.004     # factor de downsampling para mapa, hay que reducir puntos en ambas nubes
-DOWN_SAMPLING_FACTOR = 0.01             # factor de downsampling para scan
+GROUNDTRUTH_FILE_PATH = f"{PACKAGE_PATH}/sim_groundtruth_data.csv"
+LOCAL_CLOUDS_FOLDER = f"{PACKAGE_PATH}/sim_local_clouds"
 
 ########################################
 
@@ -68,6 +58,19 @@ def spatial_rotation(point, p):
     transformed = np.dot(point, rotation_matrix.T) + np.array([p[0], p[1], p[2]])
 
     return transformed
+
+def filter_map_height(map, z_min, z_max):
+
+    # Create a crop box to keep only the points between z_min and z_max
+    crop_box = o3d.geometry.AxisAlignedBoundingBox(
+        min_bound=(-float('inf'), -float('inf'), z_min),
+        max_bound=(float('inf'), float('inf'), z_max)
+    )
+
+    # Apply the crop to the point cloud
+    filtered_map = map.crop(crop_box)
+
+    return filtered_map
 
 
 def get_groundtruth_data(GROUNDTRUTH_FILE_PATH, id_cloud):
@@ -115,9 +118,8 @@ class PCD(Node):
     def run(self):
         id_cloud = 0
 
-        # Publish global map
-        map_global_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_ori.ply")
-        map_global = map_global_ori.uniform_down_sample(every_k_points=int(1 / DOWN_SAMPLING_FACTOR_GLOBAL)) # Original PointCloud (Global Map)
+        map_global_unfiltered = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_sim.pcd")
+        map_global = filter_map_height(map_global_unfiltered, 0, 1.35)
 
         downsample_2 = 5 # Downsampling for better visualization
         points2 = np.asarray(map_global.points)[::downsample_2] # Downsampling. Son demasiados puntos para RVIZ
@@ -166,19 +168,17 @@ class PCD(Node):
 
             print(f"{Color.BOLD} Cloud: {id_cloud} {Color.END}")
 
-            real_scan_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/local_clouds/cloud_{id_cloud}.ply")
-            map_local = real_scan_ori.uniform_down_sample(every_k_points=int(1 / DOWN_SAMPLING_FACTOR))         # User Selected PointCloud (Local Map)
+            real_scan_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/sim_local_clouds/sim_pc_{id_cloud}.ply")
+            map_local = real_scan_ori
 
-            ds_1 = 1
             points = spatial_rotation(map_local.points, real_groundtruth)
-            self.publish_point_clouds(points, 'base_footprint', ds_1)
+            self.publish_point_clouds(points, 'base_footprint')
 
             print(Color.BOLD + "\n------------------------------------" + Color.END)
 
 
-    def publish_point_clouds(self, points, parent_frame, downsample_1):
-        
-        points = points[::downsample_1] # Downsampling. Son demasiados puntos para RVIZ
+    def publish_point_clouds(self, points, parent_frame):
+
         pcd = self.point_cloud(points, parent_frame)
         self.pcd_publisher_local.publish(pcd)
         print(f"Local PointCloud with dimensions {points.shape} has been published.")

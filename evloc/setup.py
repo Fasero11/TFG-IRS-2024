@@ -13,10 +13,13 @@ setup(
         ('share/' + package_name, ['package.xml']),
         # Mover los archivos de resources a el directorio install
         (f'share/{package_name}/resources/local_clouds', glob.glob('resources/local_clouds/*')),
+        (f'share/{package_name}/resources/sim_local_clouds', glob.glob('resources/sim_local_clouds/*')),
         (f'share/{package_name}/resources', glob.glob('resources/map_global_ori.ply')),
         (f'share/{package_name}/resources', glob.glob('resources/map_global_sim.pcd')),
         (f'share/{package_name}/resources', glob.glob('resources/map_global_sim_empty.pcd')),
-        (f'share/{package_name}/resources', glob.glob('resources/groundtruth_data.csv'))
+        (f'share/{package_name}/resources', glob.glob('resources/groundtruth_data.csv')),
+        (f'share/{package_name}/resources', glob.glob('resources/sim_groundtruth_data.csv'))
+
   
     ],
     install_requires=['setuptools'],
