@@ -31,7 +31,7 @@ MAX_ORI_ERROR_1 = 8
 MAX_ORI_ERROR_2 = 8
 MAX_ORI_ERROR_3 = 8
 MAX_ORI_ERROR_COMBINED = (MAX_ORI_ERROR_1 + MAX_ORI_ERROR_2 + MAX_ORI_ERROR_3) / 3 # In degrees (mean of three ori errors)
-MIN_CONVERGENCE_PERCENTAGE = 75
+MIN_CONVERGENCE_PERCENTAGE = 80
 ########################################################################
 
 
@@ -238,7 +238,7 @@ def showBarSimple(dataframe, title, title_x, title_y, max_y_value=None, custom_y
             plt.bar(index[i], y, color=color)
     else:
         if color_threshold:
-            colors = [all_colors[1] if y <= MIN_CONVERGENCE_PERCENTAGE else all_colors[0] for y in y_data]
+            colors = [all_colors[1] if y < MIN_CONVERGENCE_PERCENTAGE else all_colors[0] for y in y_data]
             plt.bar(index, y_data, color=colors)
         else:
             # Graficar las barras con un color sólido
@@ -281,7 +281,7 @@ def showInfo(data_frame, name):
     orierror_std_df = getOriErrorStd(data_frame)
 
     conv_perc_df = getConvPerc(data_frame)
-    num_convergences = (conv_perc_df > MIN_CONVERGENCE_PERCENTAGE).sum()
+    num_convergences = (conv_perc_df >= MIN_CONVERGENCE_PERCENTAGE).sum()
     print(Color.CYAN + f"{name} Convergences: {num_convergences}/{conv_perc_df.count()}" + Color.END)
 
     title_x = 'Nube de puntos'
@@ -365,9 +365,17 @@ def main():
         time_avg_pso = getDataStats(pso_data, 'time')
         time_avg_iwo = getDataStats(iwo_data, 'time')
 
+        print(f"DE Time avg: {time_avg_de.mean()}")
+        print(f"PSO Time avg: {time_avg_pso.mean()}")
+        print(f"IWO Time avg: {time_avg_iwo.mean()}")
+
         it_avg_de = getDataStats(de_data, 'it')
         it_avg_pso = getDataStats(pso_data, 'it')
         it_avg_iwo = getDataStats(iwo_data, 'it')
+
+        print(f"DE IT avg: {it_avg_de.mean()}")
+        print(f"PSO IT avg: {it_avg_pso.mean()}")
+        print(f"IWO IT avg: {it_avg_iwo.mean()}")
 
         poserror_avg_de = getDataStats(de_data, 'poserror')
         poserror_avg_pso = getDataStats(pso_data, 'poserror')
@@ -385,9 +393,9 @@ def main():
         orierror3_stats_pso = getDataStats(pso_data, 'orierror_3')
         orierror3_stats_iwo = getDataStats(iwo_data, 'orierror_3')
 
-        num_convergences_de = (conv_perc_de > MIN_CONVERGENCE_PERCENTAGE).sum()
-        num_convergences_pso = (conv_perc_pso > MIN_CONVERGENCE_PERCENTAGE).sum()
-        num_convergences_iwo = (conv_perc_iwo > MIN_CONVERGENCE_PERCENTAGE).sum()
+        num_convergences_de = (conv_perc_de >= MIN_CONVERGENCE_PERCENTAGE).sum()
+        num_convergences_pso = (conv_perc_pso >= MIN_CONVERGENCE_PERCENTAGE).sum()
+        num_convergences_iwo = (conv_perc_iwo >= MIN_CONVERGENCE_PERCENTAGE).sum()
         print(Color.CYAN + f"DE Convergences: {num_convergences_de}/{conv_perc_de.count()}" + Color.END)
         print(Color.CYAN + f"PSO Convergences: {num_convergences_pso}/{conv_perc_pso.count()}" + Color.END)
         print(Color.CYAN + f"IWO Convergences: {num_convergences_iwo}/{conv_perc_iwo.count()}" + Color.END)
