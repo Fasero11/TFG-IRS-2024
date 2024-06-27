@@ -155,6 +155,30 @@ class PCD(Node):
         self.groundtruth = np.array([x, y, z, roll, pitch, yaw])
 
     def run(self):
+
+        fixed_frame = 'base_footprint'
+
+        if (self.simulated):
+            rclpy.spin_once(self) # Read once from subscribed topics
+            while (self.cloud_points == None or np.all(np.isinf(self.groundtruth))):
+                print("Waiting for local scan...")
+                rclpy.spin_once(self)
+            
+            map_global_unfiltered = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_sim.pcd")
+            map_global = filter_map_height(map_global_unfiltered, 0, 1.35)
+            global_downsample = 1
+
+        else:
+            map_global_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_ori.ply")
+            map_global = map_global_ori.uniform_down_sample(every_k_points=int(1 / DOWN_SAMPLING_FACTOR_GLOBAL)) # Original PointCloud (Global Map)
+            global_downsample = 5
+
+        
+        points2 = np.asarray(map_global.points)[::global_downsample] # Downsampling. Son demasiados puntos para RVIZ
+        pcd_global = self.point_cloud(points2, fixed_frame)
+        self.pcd_publisher_global.publish(pcd_global)
+        print(f"Global PointCloud with dimensions {points2.shape} has been published.")
+
         # Ask once before starting if in auto mode.
         if self.auto_mode:
             id_cloud, err_dis, unif_noise, algorithm_type, version_fitness, user_NPini, user_iter_max = ask_params(self.simulated)
@@ -166,7 +190,6 @@ class PCD(Node):
             if not self.auto_mode:
                id_cloud, err_dis, unif_noise, algorithm_type, version_fitness, user_NPini, user_iter_max = ask_params(self.simulated)
 
-            map_global = None
             map_local = None
             real_groundtruth = None
 
@@ -175,9 +198,6 @@ class PCD(Node):
                 while (self.cloud_points == None or np.all(np.isinf(self.groundtruth))):
                     print("Waiting for local scan...")
                     rclpy.spin_once(self)
-                
-                map_global_unfiltered = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_sim.pcd")
-                map_global = filter_map_height(map_global_unfiltered, 0, 1.35)
 
                 real_groundtruth = self.groundtruth
 
@@ -189,24 +209,10 @@ class PCD(Node):
                 map_local = filter_map_height(map_local_unfiltered, 0, 1.35)
 
             else:
-                map_global_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_ori.ply")
                 real_scan_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/local_clouds/cloud_{id_cloud}.ply")
-                map_global = map_global_ori.uniform_down_sample(every_k_points=int(1 / DOWN_SAMPLING_FACTOR_GLOBAL)) # Original PointCloud (Global Map)
                 map_local = real_scan_ori.uniform_down_sample(every_k_points=int(1 / DOWN_SAMPLING_FACTOR))         # User Selected PointCloud (Local Map)
                 real_groundtruth = get_groundtruth_data(GROUNDTRUTH_FILE_PATH, id_cloud)              
 
-            # #TEST MAP PUBLISHING
-            # points = np.asarray(map_global.points)
-            # pcd_global = self.point_cloud(points, 'map')
-            # self.pcd_publisher_global.publish(pcd_global)
-            # print(f"Global PointCloud with dimensions {points.shape} has been published.")
-
-            # points2 = np.asarray(map_local.points)
-            # pcd_local = self.point_cloud(points2, 'map')
-            # self.pcd_publisher_local.publish(pcd_local)
-            # print(f"Local PointCloud with dimensions {points2.shape} has been published.")
-
-            print(f"\n\nObtained global scan with dimensions {np.asarray(map_global.points).shape}")
             print(f"Obtained local scan with dimensions {np.asarray(map_local.points).shape}\n")
 
             # all_best_solutions is a list containing the best solution found each iteration of the algorithm.
@@ -243,7 +249,7 @@ class PCD(Node):
                             ds_1 = 1
                             ds_2 = 5
                         
-                        self.publish_point_clouds(points, 'map', map_global, ds_1, ds_2, silent=True)
+                        self.publish_point_clouds(points, fixed_frame, ds_1, silent=True)
                         print(f"{Color.BOLD} Published solution {count}/{len(all_best_solutions)} {Color.END}")
                         time.sleep(1)
 
@@ -259,13 +265,12 @@ class PCD(Node):
                     print("Error generating point cloud.")
                     break
                 
+                # Por si se quiere hacer downsampling antes de publicar
                 ds_1 = 1
-                ds_2 = 1
                 if not self.simulated:
                     ds_1 = 1
-                    ds_2 = 5
                 
-                self.publish_point_clouds(points, 'map', map_global, ds_1, ds_2)
+                self.publish_point_clouds(points, 'base_footprint', ds_1)
 
             # Reset variables obtained from simulation
             self.cloud_points = None
@@ -296,19 +301,13 @@ class PCD(Node):
                 print("Invalid answer. Please type 'y' for yes or 'n' for no.")
 
 
-    def publish_point_clouds(self, points, parent_frame, global_map, downsample_1, downsample_2, silent=False):
+    def publish_point_clouds(self, points, parent_frame, downsample_1, silent=False):
         
-        points = points[::downsample_1] # Downsampling. Son demasiados puntos para RVIZ
+        points = points[::downsample_1]
         pcd = self.point_cloud(points, parent_frame)
         self.pcd_publisher_local.publish(pcd)
         if not silent:
             print(f"Local PointCloud with dimensions {points.shape} has been published.")
-
-        points2 = np.asarray(global_map.points)[::downsample_2] # Downsampling. Son demasiados puntos para RVIZ
-        pcd_global = self.point_cloud(points2, parent_frame)
-        self.pcd_publisher_global.publish(pcd_global)
-        if not silent:
-            print(f"Global PointCloud with dimensions {points2.shape} has been published.")
 
     def point_cloud(self, points, parent_frame):
         """ Creates a point cloud message.

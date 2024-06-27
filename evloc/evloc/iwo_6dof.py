@@ -53,7 +53,7 @@ def iwo_6dof(scanCloud, mapCloud, mapmax, mapmin, err_dis, NPini, D , Smin, Smax
     bestParticleCost = 100000000
     worstParticleCost = 100000
     count_bestfix = 0  # contadores para la convergencia del algoritmo
-    count_worsefix = 0
+    count_worstfix = 0
     count_avgfix = 0
     ind_reparto_error = 100000
 
@@ -264,7 +264,7 @@ def iwo_6dof(scanCloud, mapCloud, mapmax, mapmin, err_dis, NPini, D , Smin, Smax
 
         # Display evolution each 10 iterations
         if count == 10:
-            print(f"\nIt: {it}, {Color.GREEN}Best: {round(bestParticleCostnow, 4)}{Color.END}, {Color.RED}Worse: {round(worstParticleCostnow,4)}{Color.END}, {Color.YELLOW}Average: {round(sumcosts/nPop,4)}{Color.END}, Best/measure: {round(bestParticleCostnow/nPop,4)}, Worse/best: {round(worstParticleCostnow/bestParticleCostnow,4)}, Avg/best: {round(sumcosts/nPop/bestParticleCostnow,4)} \n Position (x, y, z, alpha, beta, theta): [{round(BestSol.Position[0],4)}, {round(BestSol.Position[1],4)}, {round(BestSol.Position[2],4)}, {round(BestSol.Position[3],4)}, {round(BestSol.Position[4],4)}, {round(BestSol.Position[5],4)}]\n")
+            print(f"\nIt: {it}, {Color.GREEN}Best: {round(bestParticleCostnow, 4)}{Color.END}, {Color.RED}Worst: {round(worstParticleCostnow,4)}{Color.END}, {Color.YELLOW}Average: {round(sumcosts/nPop,4)}{Color.END}, Best/measure: {round(bestParticleCostnow/nPop,4)}, Worst/best: {round(worstParticleCostnow/bestParticleCostnow,4)}, Avg/best: {round(sumcosts/nPop/bestParticleCostnow,4)} \n Position (x, y, z, alpha, beta, theta): [{round(BestSol.Position[0],4)}, {round(BestSol.Position[1],4)}, {round(BestSol.Position[2],4)}, {round(BestSol.Position[3],4)}, {round(BestSol.Position[4],4)}, {round(BestSol.Position[5],4)}]\n")
             count = 0
         count += 1
 
@@ -273,7 +273,7 @@ def iwo_6dof(scanCloud, mapCloud, mapmax, mapmin, err_dis, NPini, D , Smin, Smax
 
         # Convergence indicators
         if bestParticleCostnow < bestParticleCost:  # ¿Mejora el mejor respecto a la anterior iteración?
-            count_worsefix = 0
+            count_worstfix = 0
             count_avgfix = 0
             count_bestfix = 0  # Si, contador a 0
         else:
@@ -282,11 +282,11 @@ def iwo_6dof(scanCloud, mapCloud, mapmax, mapmin, err_dis, NPini, D , Smin, Smax
         bestParticleCost=bestParticleCostnow
 
         if worstParticleCost > worstParticleCostnow:  # ¿mejora el peor candidato?
-            count_worsefix = 0
+            count_worstfix = 0
             count_avgfix = 0
             count_bestfix = 0  # Sí, reiniciar contadores
         else:
-            count_worsefix += 1  # No, incrementar contador de veces que no mejora
+            count_worstfix += 1  # No, incrementar contador de veces que no mejora
 
         worstParticleCost = worstParticleCostnow
 
@@ -294,7 +294,7 @@ def iwo_6dof(scanCloud, mapCloud, mapmax, mapmin, err_dis, NPini, D , Smin, Smax
 
         if ind_reparto_error_aux < ind_reparto_error:  # ¿Mejora la media?
             count_avgfix = 0
-            count_worsefix = 0
+            count_worstfix = 0
             count_bestfix = 0  # Sí, reiniciar contadores
         else:
             count_avgfix += 1  # No, incrementar contador
@@ -302,12 +302,12 @@ def iwo_6dof(scanCloud, mapCloud, mapmax, mapmin, err_dis, NPini, D , Smin, Smax
         ind_reparto_error = ind_reparto_error_aux
 
         # Condiciones de convergencia (todos los costes iguales, población mejor, media y peor muy parecidas, población estancada, máximo de iteraciones)
-        if all([p.Cost for p in pop] == bestParticleCost) or ((worstParticleCost / bestParticleCost) < 1.15 and ind_reparto_error < 1.15) and it >= minIt or (count_bestfix > 10 and count_worsefix > 10 and count_avgfix > 10) and it >= minIt:
+        if all([p.Cost for p in pop] == bestParticleCost) or ((worstParticleCost / bestParticleCost) < 1.15 and ind_reparto_error < 1.15) and it >= minIt or (count_bestfix > 10 and count_worstfix > 10 and count_avgfix > 10) and it >= minIt:
             if all([p.Cost for p in pop] == bestParticleCost):
                 stringcondition = 'total convergence'
             elif (worstParticleCost / bestParticleCost) < (1.15 + err_dis) and ind_reparto_error < 1.15:
                 stringcondition = 'normal convergence'
-            elif count_bestfix > 10 and count_worsefix > 10 and count_avgfix > 10:
+            elif count_bestfix > 10 and count_worstfix > 10 and count_avgfix > 10:
                 stringcondition = 'invariant convergence'
                 
             print(f'Population converged in: {it} iterations and condition: {stringcondition}')

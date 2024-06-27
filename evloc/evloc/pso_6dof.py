@@ -88,7 +88,7 @@ def pso_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D, w, wdamp, c1, c2,
     bestParticlecost = float('inf')
     worstParticlecost = float('inf')
     count_bestfix = 0
-    count_worsefix = 0
+    count_worstfix = 0
     count_avgfix = 0
     ind_reparto_error = float('inf')
     particles = swarm.particles
@@ -329,7 +329,7 @@ def pso_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D, w, wdamp, c1, c2,
 
         # Display evolution each 10 iterations
         if count == 10:
-            print(f"\nIt: {it}, {Color.GREEN}Best: {round(swarm.global_best_cost, 4)}{Color.END}, {Color.RED}Worse: {round(worstParticlecost,4)}{Color.END}, {Color.YELLOW}Average: {round(sumcosts/nPop,4)}{Color.END}, Best/measure: {round(bestParticlecost/nPop,4)}, Worse/best: {round(worstParticlecost/bestParticlecost,4)}, Avg/best: {round(sumcosts/nPop/bestParticlecost,4)} \n position (x, y, z, alpha, beta, theta): [{round(swarm.global_best_position[0],4)}, {round(swarm.global_best_position[1],4)}, {round(swarm.global_best_position[2],4)}, {round(swarm.global_best_position[3],4)}, {round(swarm.global_best_position[4],4)}, {round(swarm.global_best_position[5],4)}]\n")
+            print(f"\nIt: {it}, {Color.GREEN}Best: {round(swarm.global_best_cost, 4)}{Color.END}, {Color.RED}Worst: {round(worstParticlecost,4)}{Color.END}, {Color.YELLOW}Average: {round(sumcosts/nPop,4)}{Color.END}, Best/measure: {round(bestParticlecost/nPop,4)}, Worst/best: {round(worstParticlecost/bestParticlecost,4)}, Avg/best: {round(sumcosts/nPop/bestParticlecost,4)} \n position (x, y, z, alpha, beta, theta): [{round(swarm.global_best_position[0],4)}, {round(swarm.global_best_position[1],4)}, {round(swarm.global_best_position[2],4)}, {round(swarm.global_best_position[3],4)}, {round(swarm.global_best_position[4],4)}, {round(swarm.global_best_position[5],4)}]\n")
             count=0
         count=count+1
         end_time = time.time()
@@ -338,7 +338,7 @@ def pso_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D, w, wdamp, c1, c2,
 
         # Convergence Indicators
         if bestParticlecostnow < bestParticlecost:  # ¿Mejora el mejor respecto a la iteración anterior?
-            count_worsefix = 0
+            count_worstfix = 0
             count_avgfix = 0
             count_bestfix = 0  # Sí, reiniciar contador a 0
         else:
@@ -348,11 +348,11 @@ def pso_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D, w, wdamp, c1, c2,
 
 
         if worstParticlecost > worstParticlecostnow:  # ¿Mejora el peor candidato?
-            count_worsefix = 0
+            count_worstfix = 0
             count_avgfix = 0
             count_bestfix = 0  # Sí, reiniciar contador a 0
         else:
-            count_worsefix += 1  # No, incrementar contador de veces que no mejora
+            count_worstfix += 1  # No, incrementar contador de veces que no mejora
 
         worstParticlecost = worstParticlecostnow
 
@@ -360,24 +360,24 @@ def pso_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D, w, wdamp, c1, c2,
 
         if ind_reparto_error_aux < ind_reparto_error:  # ¿Mejora la media?
             count_avgfix = 0
-            count_worsefix = 0
+            count_worstfix = 0
             count_bestfix = 0  # Sí, reiniciar contadores
         else:
             count_avgfix += 1  # No, incrementar contador de veces que no mejora
 
         ind_reparto_error = ind_reparto_error_aux
 
-        #print(f"It: {it}, Time: {round(end_time-start_time,2)}  |||  count_bestfix: {count_bestfix}, count_worsefix: {count_worsefix}, count_avgfix: {count_avgfix}  |||  worstParticlecost: {worstParticlecost} | bestParticlecost: {bestParticlecost} | ind_reparto_error: {ind_reparto_error}")
+        #print(f"It: {it}, Time: {round(end_time-start_time,2)}  |||  count_bestfix: {count_bestfix}, count_worstfix: {count_worstfix}, count_avgfix: {count_avgfix}  |||  worstParticlecost: {worstParticlecost} | bestParticlecost: {bestParticlecost} | ind_reparto_error: {ind_reparto_error}")
 
         if (all([p.cost for p in particles]) == swarm.global_best_cost) or \
-        ((count_bestfix > 10 and count_worsefix > 10 and count_avgfix > 10) and it >= minIt) or \
+        ((count_bestfix > 10 and count_worstfix > 10 and count_avgfix > 10) and it >= minIt) or \
         ((worstParticlecost / bestParticlecost < 1.15 and ind_reparto_error < 1.15) and it >= minIt):
 
             if all([p.cost for p in particles]) == swarm.global_best_cost:
                 stringcondition = 'total convergence'
             elif worstParticlecost / bestParticlecost < 1.15 and ind_reparto_error < 1.15:
                 stringcondition = 'normal convergence'
-            elif count_bestfix > 10 and count_worsefix > 10 and count_avgfix > 10:
+            elif count_bestfix > 10 and count_worstfix > 10 and count_avgfix > 10:
                 stringcondition = 'invariant convergence'
 
             print(f'Population converged in: {it} iterations and condition: {stringcondition}')

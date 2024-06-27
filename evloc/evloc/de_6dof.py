@@ -69,7 +69,7 @@ def de_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D,iter_max,F,CR,versi
     best_particle_cost = 100000000
     worst_particle_cost = 100000
     count_bestfix = 0  # Counters for algorithm convergence
-    count_worsefix = 0
+    count_worstfix = 0
     count_avgfix = 0
     ind_reparto_error = 100000
     NP = NPini
@@ -263,7 +263,7 @@ def de_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D,iter_max,F,CR,versi
         worst_particle_cost_now = WorstSol.Cost
 
         if count == 10:
-            print(f"\nIt: {it}, {Color.GREEN}Best: {round(best_particle_cost_now, 4)}{Color.END}, {Color.RED}Worse: {round(worst_particle_cost_now,4)}{Color.END}, {Color.YELLOW}Average: {round(average_cost,4)}{Color.END}, Best/measure: {round(best_particle_cost_now/NP,4)}, Worse/best: {round(worst_particle_cost_now/best_particle_cost_now,4)}, Avg/best: {round(average_cost/NP/best_particle_cost_now,4)} \n Position (x, y, z, alpha, beta, theta): [{round(BestSol.Position[0],4)}, {round(BestSol.Position[1],4)}, {round(BestSol.Position[2],4)}, {round(BestSol.Position[3],4)}, {round(BestSol.Position[4],4)}, {round(BestSol.Position[5],4)}]\n")
+            print(f"\nIt: {it}, {Color.GREEN}Best: {round(best_particle_cost_now, 4)}{Color.END}, {Color.RED}Worst: {round(worst_particle_cost_now,4)}{Color.END}, {Color.YELLOW}Average: {round(average_cost,4)}{Color.END}, Best/measure: {round(best_particle_cost_now/NP,4)}, Worst/best: {round(worst_particle_cost_now/best_particle_cost_now,4)}, Avg/best: {round(average_cost/NP/best_particle_cost_now,4)} \n Position (x, y, z, alpha, beta, theta): [{round(BestSol.Position[0],4)}, {round(BestSol.Position[1],4)}, {round(BestSol.Position[2],4)}, {round(BestSol.Position[3],4)}, {round(BestSol.Position[4],4)}, {round(BestSol.Position[5],4)}]\n")
             count=0
         count=count+1
         end_time = time.time()
@@ -272,7 +272,7 @@ def de_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D,iter_max,F,CR,versi
 
         # Convergence indicators
         if best_particle_cost_now < best_particle_cost:
-            count_worsefix = 0
+            count_worstfix = 0
             count_avgfix = 0
             count_bestfix = 0  # Yes, improvement from the previous iteration
         else:
@@ -282,11 +282,11 @@ def de_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D,iter_max,F,CR,versi
 
         # Check if the worst candidate has improved
         if worst_particle_cost_now > worst_particle_cost:
-            count_worsefix = 0
+            count_worstfix = 0
             count_avgfix = 0
             count_bestfix = 0  # Yes, improvement in the worst candidate
         else:
-            count_worsefix += 1  # No, increment the counter for non-improvement
+            count_worstfix += 1  # No, increment the counter for non-improvement
 
         worst_particle_cost = worst_particle_cost_now
  
@@ -294,7 +294,7 @@ def de_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D,iter_max,F,CR,versi
 
         if (ind_reparto_error_aux < ind_reparto_error): #Mejora la media?
             count_avgfix=0
-            count_worsefix=0
+            count_worstfix=0
             count_bestfix=0  #si
         else:
             count_avgfix= count_avgfix+1 #no
@@ -318,13 +318,13 @@ def de_6dof(scanCloud,mapCloud,mapmax,mapmin,err_dis,NPini,D,iter_max,F,CR,versi
         # media y peor muy parecida || poblacion estancada || máximo de iteraciones)
         if all(obj.Cost == best_particle_cost_now for obj in population) or \
                 (worst_particle_cost / best_particle_cost < 1.15 and ind_reparto_error < 1.15 and it >= minIt) or \
-                (count_bestfix > 10 and count_worsefix > 10 and count_avgfix > 10 and it >= minIt):
+                (count_bestfix > 10 and count_worstfix > 10 and count_avgfix > 10 and it >= minIt):
             
             if all(obj.Cost == best_particle_cost for obj in population):
                 stringcondition = 'total convergence'
             elif worst_particle_cost / best_particle_cost < (1.15 + err_dis) and ind_reparto_error < (1.15 + err_dis):
                 stringcondition = 'normal convergence'
-            elif count_bestfix > 10 and count_worsefix > 10 and count_avgfix > 10:
+            elif count_bestfix > 10 and count_worstfix > 10 and count_avgfix > 10:
                 stringcondition = 'invariant convergence'
             
             print(f'\n{Color.CYAN}Population converged in: {it} iterations and condition: {stringcondition}{Color.END}')
