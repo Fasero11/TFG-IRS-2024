@@ -171,7 +171,7 @@ class PCD(Node):
 
             print(f"{Color.BOLD} Cloud: {id_cloud} {Color.END}")
 
-            real_scan_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/sim_local_clouds/sim_pc_{id_cloud}.ply")
+            real_scan_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/sim_local_clouds/cloud_{id_cloud}.ply")
             map_local = real_scan_ori
 
             points = spatial_rotation(map_local.points, real_groundtruth)
