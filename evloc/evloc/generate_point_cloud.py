@@ -78,20 +78,7 @@ def generate_point_cloud(auto=False,
 
     solution = gl_6dof(map_global, real_scan, groundtruth, algorithm, version_fitness, err_dis, unif_noise)
 
-    best_estimate = solution.all_pose_estimates[-1]
-    
-    poserror = [groundtruth[0] - best_estimate[0],
-                groundtruth[1] - best_estimate[1],
-                groundtruth[2] - best_estimate[2]
-    ]
-
-    orierror = [
-        abs((groundtruth[3] - best_estimate[3]) * 180 / pi),
-        abs((groundtruth[4] - best_estimate[4]) * 180 / pi),
-        abs((groundtruth[5] - best_estimate[5]) * 180 / pi)
-    ]
-
-    save_error_data(id_cloud, algorithm_type, user_NPini, user_iter_max, D, F, CR, solution.time, solution.it, poserror, orierror, w, wdamp, c1, c2,
-                    Smin, Smax, exponent, sigma_initial, sigma_final, solution.stop_condition)
+    save_error_data(id_cloud, algorithm_type, user_NPini, user_iter_max, D, F, CR, solution.time, solution.it, solution.all_poserrors, solution.all_orierrors,
+                    w, wdamp, c1, c2, Smin, Smax, exponent, sigma_initial, sigma_final, solution.stop_condition)
 
     return solution.all_pose_estimates

@@ -84,19 +84,19 @@ def gl_6dof(map_global, scancloud, groundtruth, algorithm, version_fitness, err_
         f'[{round(estimate[0], 4)}, {round(estimate[1], 4)}, {round(estimate[2], 4)}, ' +
         f'{round(estimate[3], 4)}, {round(estimate[4], 4)}, {round(estimate[5], 4)}]')
 
-    poserror = [groundtruth[0] - estimate[0],
-                groundtruth[1] - estimate[1],
-                groundtruth[2] - estimate[2]
+    all_poserrors = [groundtruth[0] - estimate[0],
+                     groundtruth[1] - estimate[1],
+                     groundtruth[2] - estimate[2]
     ]
     
-    orierror = [
+    all_orierrors = [
         abs((groundtruth[3] - estimate[3]) * 180 / pi),
         abs((groundtruth[4] - estimate[4]) * 180 / pi),
         abs((groundtruth[5] - estimate[5]) * 180 / pi)
     ]
 
-    print(Color.PURPLE + f'\nEl error de posicion es: [{round(poserror[0],4)}, {round(poserror[1],4)}, {round(poserror[2],4)}] m, y el de orientacion: [{round(orierror[0],4)}, {round(orierror[1],4)}, {round(orierror[2],4)}] grados' + Color.END)
+    print(Color.PURPLE + f'\nEl error de posicion es: [{round(all_poserrors[0],4)}, {round(all_poserrors[1],4)}, {round(all_poserrors[2],4)}] m, y el de orientacion: [{round(all_orierrors[0],4)}, {round(all_orierrors[1],4)}, {round(all_orierrors[2],4)}] grados' + Color.END)
     print(Color.GREEN + f'Tiempo transcurrido: {round(final_time-initial_time, 2)} segundos' + Color.END)
-    solution = Solution(it, (final_time-initial_time), allEstimates, poserror, orierror, map_global, real_scan.points, stop_condition)
+    solution = Solution(it, (final_time-initial_time), allEstimates, all_poserrors, all_orierrors, map_global, real_scan.points, stop_condition)
 
     return solution

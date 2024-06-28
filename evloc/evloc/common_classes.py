@@ -26,12 +26,12 @@ class Solution:
     map_global: Global map
     real_scan: Local map
     """
-    def __init__(self, it, timediff, all_estimates, pos_error, ori_error, map_global, real_scan, stop_condition):
+    def __init__(self, it, timediff, all_estimates, all_poserrors, all_orierrors, map_global, real_scan, stop_condition):
         self.it = it
         self.time = timediff
         self.all_pose_estimates = all_estimates
-        self.pos_error = pos_error
-        self.ori_error = ori_error
+        self.all_poserrors = all_poserrors
+        self.all_orierrors = all_orierrors
         self.map = map_global
         self.stop_condition = stop_condition
     
