@@ -24,10 +24,10 @@ current_directory = os.path.dirname(__file__)
 parent_directory = os.path.join(current_directory, '..')
 filepath = os.path.join(parent_directory, 'errordata.csv')
 
-MAX_POS_ERROR = 0.75 # In meters
-MAX_ORI_ERROR_1 = 10
-MAX_ORI_ERROR_2 = 10
-MAX_ORI_ERROR_3 = 10
+MAX_POS_ERROR = 0.25 # In meters
+MAX_ORI_ERROR_1 = 8
+MAX_ORI_ERROR_2 = 8
+MAX_ORI_ERROR_3 = 8
 MIN_CONVERGENCE_PERCENTAGE = 80
 ########################################################################
 
@@ -251,7 +251,7 @@ def main():
     DE_pso_avg = pd.DataFrame({'id_cloud': poserror_dist_de['id_cloud'], 'Val': poserror_dist_de['poserror_dist']})
     PSO_pos_avg = pd.DataFrame({'id_cloud': poserror_dist_pso['id_cloud'], 'Val': poserror_dist_pso['poserror_dist']})
     IWO_pos_avg = pd.DataFrame({'id_cloud': poserror_dist_iwo['id_cloud'], 'Val': poserror_dist_iwo['poserror_dist']})
-    showBoxPlotCombined(DE_pso_avg, PSO_pos_avg, IWO_pos_avg, title, title_x, title_y, custom_y_limit=MAX_POS_ERROR, max_y_value=17)
+    showBoxPlotCombined(DE_pso_avg, PSO_pos_avg, IWO_pos_avg, title, title_x, title_y, custom_y_limit=MAX_POS_ERROR, max_y_value=8)
 
     title = 'Error de orientación (Cabeceo) por nube de puntos por algoritmo'
     title_y = 'Error de orientación en grados'
