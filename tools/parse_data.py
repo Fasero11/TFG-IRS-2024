@@ -377,9 +377,9 @@ def main():
         print(f"PSO IT avg: {it_avg_pso.mean()}")
         print(f"IWO IT avg: {it_avg_iwo.mean()}")
 
-        poserror_avg_de = getDataStats(de_data, 'poserror')
-        poserror_avg_pso = getDataStats(pso_data, 'poserror')
-        poserror_avg_iwo = getDataStats(iwo_data, 'poserror')
+        poserror_avg_de = getDataStats(de_data, 'poserror_avg')
+        poserror_avg_pso = getDataStats(pso_data, 'poserror_avg')
+        poserror_avg_iwo = getDataStats(iwo_data, 'poserror_avg')
 
         orierror1_stats_de = getDataStats(de_data, 'orierror_1')
         orierror1_stats_pso = getDataStats(pso_data, 'orierror_1')

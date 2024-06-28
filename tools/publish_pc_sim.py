@@ -123,8 +123,7 @@ class PCD(Node):
         map_global_unfiltered = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_sim.pcd")
         map_global = filter_map_height(map_global_unfiltered, 0, 1.35)
 
-        downsample_2 = 1 # Downsampling for better visualization
-        points2 = np.asarray(map_global.points)[::downsample_2] # Downsampling. Son demasiados puntos para RVIZ
+        points2 = np.asarray(map_global.points)
         points2 = spatial_rotation(map_global.points, GLOBAL_OFFSET)
         pcd_global = self.point_cloud(points2, 'base_footprint')
         self.pcd_publisher_global.publish(pcd_global)

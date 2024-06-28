@@ -22,7 +22,7 @@ median_color = '#de1414'  # Rojo oscuro para la línea de la mediana
 
 current_directory = os.path.dirname(__file__)
 parent_directory = os.path.join(current_directory, '..')
-filepath = os.path.join(parent_directory, 'errordata.csv')
+filepath = os.path.join(parent_directory, 'errordata_sim.csv')
 
 MAX_POS_ERROR = 0.25 # In meters
 MAX_ORI_ERROR_1 = 8
@@ -32,7 +32,7 @@ MIN_CONVERGENCE_PERCENTAGE = 80
 ########################################################################
 
 def getConvPerc(data_frame):
-    pos_errors = data_frame['poserror']
+    pos_errors = data_frame['poserror_avg']
     ori_errors = data_frame[['orierror_1', 'orierror_2', 'orierror_3']]
 
     # Calcula la condición de convergencia
@@ -59,9 +59,6 @@ def getDataStats(data_frame, col_id):
 
 def showBarCombined(dataframe, title, title_x, title_y, max_y_value=None,
                     custom_y_limit=None):
-
-    dataframe_part1 = dataframe[dataframe['id_cloud'] <= 22]
-    dataframe_part2 = dataframe[dataframe['id_cloud'] > 22]
 
     # Función interna para graficar una parte del dataframe
     def plot_part(dataframe_part, title_suffix):
@@ -99,23 +96,22 @@ def showBarCombined(dataframe, title, title_x, title_y, max_y_value=None,
         plt.tight_layout()
         plt.show()
 
-    # Graficar la primera parte
-    plot_part(dataframe_part1, "Primeras 22 Medidas")
+    if len(dataframe['id_cloud'].unique()) > 22:
 
-    # Graficar la segunda parte
-    plot_part(dataframe_part2, "Últimas 22 Medidas")
+        dataframe_part1 = dataframe[dataframe['id_cloud'] <= 22]
+        dataframe_part2 = dataframe[dataframe['id_cloud'] > 22]
+
+        # Graficar la primera parte
+        plot_part(dataframe_part1, "Primeras 22 Medidas")
+
+        # Graficar la segunda parte
+        plot_part(dataframe_part2, "Últimas 22 Medidas")
+
+    else:
+        plot_part(dataframe, "")
 
 
 def showBoxPlotCombined(DE_df, PSO_df, IWO_df, title, title_x, title_y, max_y_value=None, custom_y_limit=None):
-
-    DE_part_1 = DE_df[DE_df['id_cloud'] <= 22]
-    DE_part_2 = DE_df[DE_df['id_cloud'] > 22]
-
-    PSO_part_1 = PSO_df[PSO_df['id_cloud'] <= 22]
-    PSO_part_2 = PSO_df[PSO_df['id_cloud'] > 22]
-
-    IWO_part_1 = IWO_df[IWO_df['id_cloud'] <= 22]
-    IWO_part_2 = IWO_df[IWO_df['id_cloud'] > 22]
 
     # Función interna para graficar una parte del dataframe
     def plot_part(DE_part, PSO_part, IWO_part, title_suffix):
@@ -167,11 +163,24 @@ def showBoxPlotCombined(DE_df, PSO_df, IWO_df, title, title_x, title_y, max_y_va
         plt.tight_layout()
         plt.show()
 
-    # Graficar la primera parte
-    plot_part(DE_part_1, PSO_part_1, IWO_part_1, "Primeras 22 Medidas")
+    if len(DE_df['id_cloud'].unique()) > 22:
+        DE_part_1 = DE_df[DE_df['id_cloud'] <= 22]
+        DE_part_2 = DE_df[DE_df['id_cloud'] > 22]
 
-    # Graficar la segunda parte
-    plot_part(DE_part_2, PSO_part_2, IWO_part_2, "Últimas 22 Medidas")
+        PSO_part_1 = PSO_df[PSO_df['id_cloud'] <= 22]
+        PSO_part_2 = PSO_df[PSO_df['id_cloud'] > 22]
+
+        IWO_part_1 = IWO_df[IWO_df['id_cloud'] <= 22]
+        IWO_part_2 = IWO_df[IWO_df['id_cloud'] > 22]
+
+        # Graficar la primera parte
+        plot_part(DE_part_1, PSO_part_1, IWO_part_1, "Primeras 22 Medidas")
+
+        # Graficar la segunda parte
+        plot_part(DE_part_2, PSO_part_2, IWO_part_2, "Últimas 22 Medidas")
+
+    else:
+        plot_part(DE_df, PSO_df, IWO_df, "")
 
 def main():
     data = pd.read_csv(filepath)
@@ -192,9 +201,9 @@ def main():
     it_avg_pso = getDataStats(pso_data, 'it')
     it_avg_iwo = getDataStats(iwo_data, 'it')
 
-    poserror_avg_de = getDataStats(de_data, 'poserror')
-    poserror_avg_pso = getDataStats(pso_data, 'poserror')
-    poserror_avg_iwo = getDataStats(iwo_data, 'poserror')
+    poserror_avg_de = getDataStats(de_data, 'poserror_avg')
+    poserror_avg_pso = getDataStats(pso_data, 'poserror_avg')
+    poserror_avg_iwo = getDataStats(iwo_data, 'poserror_avg')
 
     orierror1_stats_de = getDataStats(de_data, 'orierror_1')
     orierror1_stats_pso = getDataStats(pso_data, 'orierror_1')
@@ -239,9 +248,9 @@ def main():
 
     title = 'Error de posición por nube de puntos por algoritmo'
     title_y = 'Error de posición en metros'
-    DE_pso_avg = pd.DataFrame({'id_cloud': poserror_avg_de['id_cloud'], 'Val': poserror_avg_de['poserror']})
-    PSO_pos_avg = pd.DataFrame({'id_cloud': poserror_avg_pso['id_cloud'], 'Val': poserror_avg_pso['poserror']})
-    IWO_pos_avg = pd.DataFrame({'id_cloud': poserror_avg_iwo['id_cloud'], 'Val': poserror_avg_iwo['poserror']})
+    DE_pso_avg = pd.DataFrame({'id_cloud': poserror_avg_de['id_cloud'], 'Val': poserror_avg_de['poserror_avg']})
+    PSO_pos_avg = pd.DataFrame({'id_cloud': poserror_avg_pso['id_cloud'], 'Val': poserror_avg_pso['poserror_avg']})
+    IWO_pos_avg = pd.DataFrame({'id_cloud': poserror_avg_iwo['id_cloud'], 'Val': poserror_avg_iwo['poserror_avg']})
     showBoxPlotCombined(DE_pso_avg, PSO_pos_avg, IWO_pos_avg, title, title_x, title_y, custom_y_limit=MAX_POS_ERROR, max_y_value=8)
 
     title = 'Error de orientación (Cabeceo) por nube de puntos por algoritmo'
