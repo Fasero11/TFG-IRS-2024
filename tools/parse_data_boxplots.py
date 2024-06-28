@@ -22,7 +22,7 @@ median_color = '#de1414'  # Rojo oscuro para la línea de la mediana
 
 current_directory = os.path.dirname(__file__)
 parent_directory = os.path.join(current_directory, '..')
-filepath = os.path.join(parent_directory, 'errordata.csv')
+filepath = os.path.join(parent_directory, 'errordata_sim.csv')
 
 MAX_POS_ERROR = 0.25 # In meters
 MAX_ORI_ERROR_1 = 8
