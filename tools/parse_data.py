@@ -41,7 +41,7 @@ def getSampleCounts(data_frame):
 
 
 def getConvPerc(data_frame):
-    pos_errors = data_frame['poserror']
+    pos_errors = data_frame['poserror_dist']
     ori_errors = data_frame[['orierror_1', 'orierror_2', 'orierror_3']]
 
     # Calcula la condición de convergencia
@@ -274,8 +274,8 @@ def showInfo(data_frame, name):
     it_avg_df = getDataStats(data_frame, 'it')
     it_std_df = getDataStd(data_frame, 'it')
 
-    poserror_avg_df = getDataStats(data_frame, 'poserror')
-    poserror_std_df = getDataStd(data_frame, 'poserror')
+    poserror_dist_df = getDataStats(data_frame, 'poserror_dist')
+    poserror_std_df = getDataStd(data_frame, 'poserror_dist')
 
     orierror_stats_df = getOriErrorStats(data_frame)
     orierror_std_df = getOriErrorStd(data_frame)
@@ -304,7 +304,7 @@ def showInfo(data_frame, name):
 
     title = f'Error de posición por nube de puntos. Algoritmo {name}'
     title_y = 'Error de posición (metros)'
-    showErrorBarSimple(poserror_avg_df, poserror_std_df, title, title_x, title_y, custom_y_limit=MAX_POS_ERROR, color_gradient=True)
+    showErrorBarSimple(poserror_dist_df, poserror_std_df, title, title_x, title_y, custom_y_limit=MAX_POS_ERROR, color_gradient=True)
 
     title = f'Error de orientación por nube de puntos. Algoritmo {name}'
     title_y = 'Error de orientación (grados)'
@@ -377,9 +377,9 @@ def main():
         print(f"PSO IT avg: {it_avg_pso.mean()}")
         print(f"IWO IT avg: {it_avg_iwo.mean()}")
 
-        poserror_avg_de = getDataStats(de_data, 'poserror_avg')
-        poserror_avg_pso = getDataStats(pso_data, 'poserror_avg')
-        poserror_avg_iwo = getDataStats(iwo_data, 'poserror_avg')
+        poserror_dist_de = getDataStats(de_data, 'poserror_dist')
+        poserror_dist_pso = getDataStats(pso_data, 'poserror_dist')
+        poserror_dist_iwo = getDataStats(iwo_data, 'poserror_dist')
 
         orierror1_stats_de = getDataStats(de_data, 'orierror_1')
         orierror1_stats_pso = getDataStats(pso_data, 'orierror_1')
@@ -424,8 +424,8 @@ def main():
 
         title = 'Error de posición por nube de puntos por algortimo'
         title_y = 'Error de posición en metros'
-        combined_poserror_avg = pd.DataFrame({'DE': poserror_avg_de, 'PSO': poserror_avg_pso, 'IWO': poserror_avg_iwo})
-        showBarCombined(combined_poserror_avg, title, title_x, title_y, custom_y_limit=MAX_POS_ERROR)
+        combined_poserror_dist = pd.DataFrame({'DE': poserror_dist_de, 'PSO': poserror_dist_pso, 'IWO': poserror_dist_iwo})
+        showBarCombined(combined_poserror_dist, title, title_x, title_y, custom_y_limit=MAX_POS_ERROR)
 
         title = 'Error de orientación (Cabeceo) por nube de puntos por algortimo'
         title_y = 'Error de orientación en grados'

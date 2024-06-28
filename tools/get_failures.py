@@ -46,7 +46,7 @@ def main():
 
     print('--------------------------')
     error_threshold = MAX_POS_ERROR
-    for category in ['poserror', 'orierror_1', 'orierror_2', 'orierror_3']:
+    for category in ['poserror_dist', 'orierror_1', 'orierror_2', 'orierror_3']:
         for dataset in [data_de, data_pso, data_iwo]:
             errors = dataset[dataset[category] > error_threshold].shape[0]
             total = dataset.shape[0]

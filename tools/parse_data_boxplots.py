@@ -24,15 +24,15 @@ current_directory = os.path.dirname(__file__)
 parent_directory = os.path.join(current_directory, '..')
 filepath = os.path.join(parent_directory, 'errordata.csv')
 
-MAX_POS_ERROR = 0.25 # In meters
-MAX_ORI_ERROR_1 = 8
-MAX_ORI_ERROR_2 = 8
-MAX_ORI_ERROR_3 = 8
+MAX_POS_ERROR = 0.75 # In meters
+MAX_ORI_ERROR_1 = 10
+MAX_ORI_ERROR_2 = 10
+MAX_ORI_ERROR_3 = 10
 MIN_CONVERGENCE_PERCENTAGE = 80
 ########################################################################
 
 def getConvPerc(data_frame):
-    pos_errors = data_frame['poserror_avg']
+    pos_errors = data_frame['poserror_dist']
     ori_errors = data_frame[['orierror_1', 'orierror_2', 'orierror_3']]
 
     # Calcula la condición de convergencia
@@ -201,9 +201,9 @@ def main():
     it_avg_pso = getDataStats(pso_data, 'it')
     it_avg_iwo = getDataStats(iwo_data, 'it')
 
-    poserror_avg_de = getDataStats(de_data, 'poserror_avg')
-    poserror_avg_pso = getDataStats(pso_data, 'poserror_avg')
-    poserror_avg_iwo = getDataStats(iwo_data, 'poserror_avg')
+    poserror_dist_de = getDataStats(de_data, 'poserror_dist')
+    poserror_dist_pso = getDataStats(pso_data, 'poserror_dist')
+    poserror_dist_iwo = getDataStats(iwo_data, 'poserror_dist')
 
     orierror1_stats_de = getDataStats(de_data, 'orierror_1')
     orierror1_stats_pso = getDataStats(pso_data, 'orierror_1')
@@ -248,10 +248,10 @@ def main():
 
     title = 'Error de posición por nube de puntos por algoritmo'
     title_y = 'Error de posición en metros'
-    DE_pso_avg = pd.DataFrame({'id_cloud': poserror_avg_de['id_cloud'], 'Val': poserror_avg_de['poserror_avg']})
-    PSO_pos_avg = pd.DataFrame({'id_cloud': poserror_avg_pso['id_cloud'], 'Val': poserror_avg_pso['poserror_avg']})
-    IWO_pos_avg = pd.DataFrame({'id_cloud': poserror_avg_iwo['id_cloud'], 'Val': poserror_avg_iwo['poserror_avg']})
-    showBoxPlotCombined(DE_pso_avg, PSO_pos_avg, IWO_pos_avg, title, title_x, title_y, custom_y_limit=MAX_POS_ERROR, max_y_value=8)
+    DE_pso_avg = pd.DataFrame({'id_cloud': poserror_dist_de['id_cloud'], 'Val': poserror_dist_de['poserror_dist']})
+    PSO_pos_avg = pd.DataFrame({'id_cloud': poserror_dist_pso['id_cloud'], 'Val': poserror_dist_pso['poserror_dist']})
+    IWO_pos_avg = pd.DataFrame({'id_cloud': poserror_dist_iwo['id_cloud'], 'Val': poserror_dist_iwo['poserror_dist']})
+    showBoxPlotCombined(DE_pso_avg, PSO_pos_avg, IWO_pos_avg, title, title_x, title_y, custom_y_limit=MAX_POS_ERROR, max_y_value=17)
 
     title = 'Error de orientación (Cabeceo) por nube de puntos por algoritmo'
     title_y = 'Error de orientación en grados'

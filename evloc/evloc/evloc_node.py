@@ -25,11 +25,11 @@ import time
 
 PACKAGE_PATH = os.path.join(get_package_share_directory('evloc'), 'resources')
 
-GROUNDTRUTH_FILE_PATH = f"{PACKAGE_PATH}/sim_groundtruth_data.csv"
-LOCAL_CLOUDS_FOLDER = f"{PACKAGE_PATH}/sim_local_clouds"
+GROUNDTRUTH_FILE_PATH = f"{PACKAGE_PATH}/groundtruth_data.csv"
+LOCAL_CLOUDS_FOLDER = f"{PACKAGE_PATH}/local_clouds"
 
-DOWN_SAMPLING_FACTOR_GLOBAL = 0.003 #0.004     # factor de downsampling para mapa, hay que reducir puntos en ambas nubes
-DOWN_SAMPLING_FACTOR = 1 #0.01             # factor de downsampling para scan
+DOWN_SAMPLING_FACTOR_GLOBAL = 0.004 #0.003     # factor de downsampling para mapa, hay que reducir puntos en ambas nubes
+DOWN_SAMPLING_FACTOR = 0.01 #1             # factor de downsampling para scan
 POP_RATIO = 0.01
 
 MAX_CLOUDS = 4 # 44
@@ -171,13 +171,13 @@ class PCD(Node):
             global_downsample = 1
 
         else:
-            # map_global_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_ori.ply")
-            # map_global = map_global_ori.uniform_down_sample(every_k_points=int(1 / DOWN_SAMPLING_FACTOR_GLOBAL)) # Original PointCloud (Global Map)
-            # global_downsample = 5
+            map_global_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_ori.ply")
+            map_global = map_global_ori.uniform_down_sample(every_k_points=int(1 / DOWN_SAMPLING_FACTOR_GLOBAL)) # Original PointCloud (Global Map)
+            global_downsample = 5
 
-            map_global_unfiltered = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_sim.pcd")
-            map_global = filter_map_height(map_global_unfiltered, 0, 1.35)
-            global_downsample = 1
+            # map_global_unfiltered = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/map_global_sim.pcd")
+            # map_global = filter_map_height(map_global_unfiltered, 0, 1.35)
+            # global_downsample = 1
 
         points2 = np.asarray(map_global.points)[::global_downsample] # Downsampling. Son demasiados puntos para RVIZ
         pcd_global = self.point_cloud(points2, fixed_frame)
