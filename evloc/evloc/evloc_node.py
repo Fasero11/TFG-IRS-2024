@@ -32,7 +32,9 @@ DOWN_SAMPLING_FACTOR_GLOBAL = 0.003 #0.004     # factor de downsampling para map
 DOWN_SAMPLING_FACTOR = 1 #0.01             # factor de downsampling para scan
 POP_RATIO = 0.01
 
-MAX_CLOUDS = 4 # 44 # TODO. cambiar cuando no sim
+# Used in auto mode to execute in a loop from cloud min to cloud max.
+MIN_CLOUD_ID = 1 # 44 # TODO. cambiar cuando no sim
+MAX_CLOUD_ID = 1 # 44 # TODO. cambiar cuando no sim
 
 ########################################
 
@@ -288,8 +290,8 @@ class PCD(Node):
                 if not self.simulated:
                     # Loop for every cloud when in auto mode
                     id_cloud += 1
-                    if id_cloud > MAX_CLOUDS:
-                        id_cloud = 1
+                    if id_cloud > MAX_CLOUD_ID:
+                        id_cloud = MIN_CLOUD_ID
 
             print(Color.BOLD + "\n------------------------------------" + Color.END)
 

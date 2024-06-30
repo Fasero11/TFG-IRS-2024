@@ -139,7 +139,7 @@ class PCD(Node):
             map_local_unfiltered.points = o3d.utility.Vector3dVector(point_list)
             map_local = filter_map_height(map_local_unfiltered, 0, 1.35)
 
-            o3d.io.write_point_cloud(f'{SIM_LOCAL_CLOUDS_FOLDER}/sim_pc_{id}.ply', map_local)
+            o3d.io.write_point_cloud(f'{SIM_LOCAL_CLOUDS_FOLDER}/cloud_{id}.ply', map_local)
             self.store_groundtruth(self.groundtruth)
 
             self.pcd_publisher_global.publish(self.cloud_points)

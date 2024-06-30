@@ -197,9 +197,18 @@ def main():
     time_avg_pso = getDataStats(pso_data, 'time')
     time_avg_iwo = getDataStats(iwo_data, 'time')
 
+    print(f"mean time DE: {np.mean(time_avg_de['time'])}")
+    print(f"mean time PSO: {np.mean(time_avg_pso['time'])}")
+    print(f"mean time IWO: {np.mean(time_avg_iwo['time'])}")
+
     it_avg_de = getDataStats(de_data, 'it')
     it_avg_pso = getDataStats(pso_data, 'it')
     it_avg_iwo = getDataStats(iwo_data, 'it')
+
+    print("---------------------------------")
+    print(f"mean its DE: {np.mean(it_avg_de['it'])}")
+    print(f"mean its PSO: {np.mean(it_avg_pso['it'])}")
+    print(f"mean its IWO: {np.mean(it_avg_iwo['it'])}")
 
     poserror_dist_de = getDataStats(de_data, 'poserror_dist')
     poserror_dist_pso = getDataStats(pso_data, 'poserror_dist')
@@ -251,7 +260,7 @@ def main():
     DE_pso_avg = pd.DataFrame({'id_cloud': poserror_dist_de['id_cloud'], 'Val': poserror_dist_de['poserror_dist']})
     PSO_pos_avg = pd.DataFrame({'id_cloud': poserror_dist_pso['id_cloud'], 'Val': poserror_dist_pso['poserror_dist']})
     IWO_pos_avg = pd.DataFrame({'id_cloud': poserror_dist_iwo['id_cloud'], 'Val': poserror_dist_iwo['poserror_dist']})
-    showBoxPlotCombined(DE_pso_avg, PSO_pos_avg, IWO_pos_avg, title, title_x, title_y, custom_y_limit=MAX_POS_ERROR, max_y_value=8)
+    showBoxPlotCombined(DE_pso_avg, PSO_pos_avg, IWO_pos_avg, title, title_x, title_y, custom_y_limit=MAX_POS_ERROR, max_y_value=12)
 
     title = 'Error de orientación (Cabeceo) por nube de puntos por algoritmo'
     title_y = 'Error de orientación en grados'
