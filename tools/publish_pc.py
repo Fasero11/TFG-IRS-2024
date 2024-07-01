@@ -9,6 +9,7 @@ import csv
 import os
 import math
 import time 
+from sensor_msgs.msg import PointCloud2, PointField
 
 import warnings
 
@@ -30,7 +31,7 @@ PACKAGE_PATH = os.path.join(get_package_share_directory('evloc'), 'resources')
 GROUNDTRUTH_FILE_PATH = f"{PACKAGE_PATH}/groundtruth_data.csv"
 LOCAL_CLOUDS_FOLDER = f"{PACKAGE_PATH}/local_clouds"
 
-DOWN_SAMPLING_FACTOR_GLOBAL = 0.004     # factor de downsampling para mapa, hay que reducir puntos en ambas nubes
+DOWN_SAMPLING_FACTOR_GLOBAL = 0.025 # 0.004    # factor de downsampling para mapa, hay que reducir puntos en ambas nubes
 DOWN_SAMPLING_FACTOR = 0.01             # factor de downsampling para scan
 
 ########################################
@@ -96,7 +97,7 @@ class PCD(Node):
     def __init__(self):
         super().__init__('pcd_node')
 
-        self.declare_parameter('auto', False)
+        self.declare_parameter('auto', False) # CAMBIAR A MANO
 
         auto_color = Color.RED
 
@@ -110,8 +111,6 @@ class PCD(Node):
         self.pcd_publisher_local = self.create_publisher(sensor_msgs.PointCloud2, 'evloc_local', 10)
         self.pcd_publisher_global = self.create_publisher(sensor_msgs.PointCloud2, 'evloc_global', 10)
 
-        self.auto_mode = False # CAMBIAR A MANO
-
     def run(self):
         id_cloud = 0
 
@@ -124,7 +123,7 @@ class PCD(Node):
         pcd_global = self.point_cloud(points2, 'base_footprint')
         self.pcd_publisher_global.publish(pcd_global)
         print(f"Global PointCloud with dimensions {points2.shape} has been published.")
-
+        cleared = False
         while True:
             
             if not self.auto_mode:
@@ -162,19 +161,40 @@ class PCD(Node):
 
             real_groundtruth = get_groundtruth_data(GROUNDTRUTH_FILE_PATH, id_cloud)              
 
+            print(f"Groundtruth: {real_groundtruth}")
+
             print(Color.BOLD + "\n------------------------------------" + Color.END)
 
             print(f"{Color.BOLD} Cloud: {id_cloud} {Color.END}")
 
             real_scan_ori = o3d.io.read_point_cloud(f"{PACKAGE_PATH}/local_clouds/cloud_{id_cloud}.ply")
+
             map_local = real_scan_ori.uniform_down_sample(every_k_points=int(1 / DOWN_SAMPLING_FACTOR))         # User Selected PointCloud (Local Map)
 
+            # Publish groundtruth point instead of fullcloud.
+            if not cleared:
+                aux_cloud = map_local
+                aux_cloud.points.clear()
+                cleared = True
+
+            aux_cloud.points.append([real_groundtruth[0], real_groundtruth[1], real_groundtruth[2]])
+            real_groundtruth = [0,0,0,0,0,0]
+
             ds_1 = 1
-            points = spatial_rotation(map_local.points, real_groundtruth)
+            points = spatial_rotation(aux_cloud.points, real_groundtruth)
             self.publish_point_clouds(points, 'base_footprint', ds_1)
 
             print(Color.BOLD + "\n------------------------------------" + Color.END)
 
+
+    def calculate_centroid(self, point_cloud):
+        # Convert the point cloud to a numpy array
+        points = np.asarray(point_cloud.points)
+        
+        # Calculate the centroid
+        centroid = points.mean(axis=0)
+        
+        return centroid
 
     def publish_point_clouds(self, points, parent_frame, downsample_1):
         
